@@ -43,7 +43,7 @@ std::map<std::string, std::string> DataCreator::_read_inputfile() {
     return input_paras;
 }
 
-void DataCreator::set_all_parameters() {
+void DataCreator::read_configFile() {
     //入力ファイルの内容を順番に反映していく
     auto input_paras = _read_inputfile();
     for(auto itr = input_paras.begin(); itr != input_paras.end(); ++itr) {
@@ -264,7 +264,7 @@ void DataCreator::_run_preprocess() {
     this->Ns = std::stoi(this->parameters["Ns"]);
     this->Nq = std::stoi(this->parameters["Nq"]);
     this->depth = std::stoi(this->parameters["depth"]);
-    this->seed = std::stoi(this->parameters["seed"]);    
+    //this->seed = std::stoi(this->parameters["seed"]);    
     this->noise_operator = std::stoi(this->parameters["noise_operator"]);
     this->noise_prob = std::stof(this->parameters["noise_prob"]);
     
@@ -449,7 +449,7 @@ void DataCreator::save_result() {
     if(this->unitary_type == 2 || this->unitary_type == 3) {
         config_file << " depth : " << this->depth << std::endl;
     }
-    config_file << " seed : " << this->seed << std::endl;
+    //config_file << " seed : " << this->seed << std::endl;
     if(this->unitary_type == 2) {
         if(this->noise_operator == 0) {
             config_file << " noise_operator : none" << std::endl;

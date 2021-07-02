@@ -2,3 +2,4 @@ result/
 main/main
 main/main_backup
 qulacs/
+__pycache__/

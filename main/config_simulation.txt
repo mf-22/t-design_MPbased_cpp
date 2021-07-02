@@ -14,7 +14,7 @@ Nq:4
 #circuit depth
 depth:5
 #seed of psudo random generator
-seed:123
+#seed:123
 #kind of noise(0:nothing, 1:DepolarizingNoise, 2:Measurement)
 noise_operator:2
 #probability of noise

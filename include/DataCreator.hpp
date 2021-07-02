@@ -58,13 +58,13 @@ public:
         this->parameters["Ns"] = "100";
         this->parameters["Nq"] = "4";
         this->parameters["depth"] = "5";
-        this->parameters["seed"] = "8010";
+        //this->parameters["seed"] = "8010";
         this->parameters["noise_operator"] = "0";
         this->parameters["noise_prob"] = "0.01";
 	}
 
     //辞書型で一括でパラメータをセット
-    void set_all_parameters();
+    void read_configFile();
     //パラメータをキーと値でセット
     void set_parameter(std::string key, std::string val);
     //データ生成の開始
