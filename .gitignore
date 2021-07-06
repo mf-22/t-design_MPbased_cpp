@@ -3,3 +3,4 @@ main/main
 main/main_backup
 qulacs/
 __pycache__/
+msvc_project/

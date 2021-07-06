@@ -67,7 +67,7 @@ def gen_random_index(order):
 
 def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
-    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=float)
+    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
     ## 量子状態の準備
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言、位数は11520
@@ -108,7 +108,7 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
 
 def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
-    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=float)
+    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
     ## 量子状態の準備
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言
