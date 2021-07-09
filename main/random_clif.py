@@ -1,5 +1,7 @@
 from group.clifford_group_circuit import CliffordCircuitGroup
+from group.clifford_group import CliffordGroup
 from qulacs import QuantumState
+from qulacs.gate import CNOT, DenseMatrix
 import itertools
 import time
 import numpy as np
@@ -20,12 +22,14 @@ def input_parameters():
     paras_dict["Ns"] = int(input())
     print('Nq :', end=(' '))
     paras_dict["Nq"] = int(input())
-    print('Local random clifford(1:=Yes, 0:=No) :', end=(' '))
+    print('Local random clifford?(1:=Yes, 0:=No) :', end=(' '))
     local_in = int(input())
     if local_in == 1:
         paras_dict["local"] = True
         print('input circuit depth :', end=(' '))
         paras_dict["depth"] = int(input())
+        print('CNOT & 1q Clifford?(1:=Yes, 0:=No) :', end=(' '))
+        paras_dict["CNOT_1qC"] = int(input())
     else:
         paras_dict["local"] = False
 
@@ -105,6 +109,50 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
     print('')
     
     return MP_list
+
+def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
+    ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
+    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
+    ## 量子状態の準備
+    state = QuantumState(Nq)
+    ## 2qubitのクリフォード群を宣言、位数は11520
+    ## 4×4の行列ではなくゲート列が返ってくる
+    cg = CliffordGroup(1)
+    ##order = ccg.order <= 24
+
+    for i in range(S):
+        ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
+        haar_seed = np.random.randint(2147483648) #2^31
+        for j in range(Nu):
+            ## 初期状態をHaar random stateにする
+            state.set_Haar_random_state(haar_seed)
+            ## 2qubitのランダムクリフォードを互い違いにかけていく
+            for k in range(1, depth+1):
+                for qubit_index in RU_index_list[k%2]:
+                    CNOT(qubit_index, qubit_index+1).update_quantum_state(state)
+                    clif_matrix = cg.sampling(2)
+                    DenseMatrix(qubit_index, clif_matrix[0]).update_quantum_state(state)
+                    DenseMatrix(qubit_index+1, clif_matrix[1]).update_quantum_state(state)
+            ## 測定を行う
+            while True:
+                sample_dec = state.sampling(Ns)
+                if (2**Nq) not in sample_dec:
+                    break
+            ## 10進数表記の測定結果を2進数のビット列に変換
+            result_bin = np.array([list(bin(n)[2:].zfill(Nq)) for n in sample_dec]).astype(np.int8)
+            ## 0 => -1　に変換
+            result_bin[result_bin == 0] = -1
+            ## ビット相関を計算し、測定確率を計算
+            for k, combination in enumerate(comb_list):
+                bit_corr = result_bin[:, combination[0]]
+                for index in range(1, len(combination)):
+                    bit_corr *= result_bin[:, combination[index]]
+                MP_list[i][j][k] = np.mean(bit_corr)
+        print('\r{} / {} finished...'.format(i+1, S), end=(''))
+    print('')
+    return MP_list
+
+
 
 def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
@@ -186,18 +234,28 @@ def main(parallel = True):
                              paras_dict["Nq"], paras_dict["depth"],
                              RU_index_list, comb_list))
             ## 並列実行の開始
-            p = multiprocessing.Pool(core_num)
-            returns = p.starmap(sim_local_random_clifford, args)
-            p.close()
+            if paras_dict["CNOT_1qC"] == 0:
+                p = multiprocessing.Pool(core_num)
+                returns = p.starmap(sim_local_random_clifford, args)
+                p.close()
+            elif paras_dict["CNOT_1qC"] == 1:
+                p = multiprocessing.Pool(core_num)
+                returns = p.starmap(sim_local_random_clif_CNOTand1qubitClif, args)
+                p.close()
             ##　それぞれのスレッドの実行結果をひとまとめにする
             result = np.concatenate(returns, axis=0)
 
         ## 逐次実行
         else:
             ## 量子回路シミュレーションと測定確率の計算
-            result = sim_local_random_clifford(paras_dict["S"],  paras_dict["Nu"],
-                                            paras_dict["Ns"], paras_dict["Nq"],
-                                            paras_dict["depth"], RU_index_list, comb_list)
+            if paras_dict["CNOT_1qC"] == 0:
+                result = sim_local_random_clifford(paras_dict["S"],  paras_dict["Nu"],
+                                                paras_dict["Ns"], paras_dict["Nq"],
+                                                paras_dict["depth"], RU_index_list, comb_list)
+            elif paras_dict["CNOT_1qC"] == 1:
+                result = sim_local_random_clif_CNOTand1qubitClif(paras_dict["S"],  paras_dict["Nu"],
+                                                paras_dict["Ns"], paras_dict["Nq"],
+                                                paras_dict["depth"], RU_index_list, comb_list)
 
     ## Random Cliffordの計算
     else:
@@ -246,6 +304,7 @@ def main(parallel = True):
         f.write(" Nq : {}\n".format(paras_dict["Nq"]))
         if paras_dict["local"]:
             f.write("depth : {}\n".format(paras_dict["depth"]))
+            f.write("CNOT&1q clif : {}\n".format(paras_dict["CNOT_1qC"]))
     ## 色々出力
     print('\nData is saved as "clif_{}.npy".'.format(dt_index))
     print('Information(parameters) of this data is in "info_clif_{}.npy".'.format(dt_index))
