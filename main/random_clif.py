@@ -101,7 +101,7 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
             result_bin[result_bin == 0] = -1
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
-                bit_corr = result_bin[:, combination[0]]
+                bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
                 MP_list[i][j][k] = np.mean(bit_corr)
@@ -144,15 +144,13 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
             result_bin[result_bin == 0] = -1
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
-                bit_corr = result_bin[:, combination[0]]
+                bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
                 MP_list[i][j][k] = np.mean(bit_corr)
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
     return MP_list
-
-
 
 def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
@@ -185,10 +183,10 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
             result_bin[result_bin == 0] = -1
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
-                bit_corr = result_bin[:, combination[0]]
+                bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
-                MP_list[i][j][k] = np.mean(bit_corr)
+                    MP_list[i][j][k] = np.mean(bit_corr)
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
     
@@ -281,8 +279,7 @@ def main(parallel = True):
             returns = p.starmap(sim_random_clifford, args)
             p.close()
             ##　それぞれのスレッドの実行結果をひとまとめにする
-            result = np.concatenate(returns, axis=0)
-            
+            result = np.concatenate(returns, axis=0)            
 
         else:
             ## 量子回路シミュレーションと測定確率の計算
