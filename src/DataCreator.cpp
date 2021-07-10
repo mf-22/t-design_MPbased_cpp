@@ -64,6 +64,8 @@ void DataCreator::set_parameter(std::string key, std::string val) {
 }
 
 void DataCreator::_haar_sim() {
+    //各ユニタリにおけるqubitの測定確率を保持するベクトル
+    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -72,15 +74,17 @@ void DataCreator::_haar_sim() {
     
     //教師データ作成
     #pragma omp parallel for private(j, sampling_result)
-    for(i=0;i<this->S;i++) {
-        for(j=0;j<this->Nu;j++) {
+    for(i=0;i<this->S;++i) {
+        for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
             state.set_Haar_random_state();
             //測定と測定確率(ビット相関も)の計算
             sampling_result = state.sampling(this->Ns);
-            this->sim_result[i][j] = _calc_BitCorr_and_MP(sampling_result);
+            MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
+        //測定確率のモーメントを計算
+        this->teacher_data[i] = _calc_moment_of_MP(MP_list);
         std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
     }
     std::cout << std::endl;
@@ -89,6 +93,8 @@ void DataCreator::_haar_sim() {
 void DataCreator::_lrc_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
 
+    //各ユニタリにおけるqubitの測定確率を保持するベクトル
+    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -96,21 +102,23 @@ void DataCreator::_lrc_sim(
     int i,j,l;
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
-    for(i=0;i<this->S;i++) {
-        for(j=0;j<this->Nu;j++) {
+    for(i=0;i<this->S;++i) {
+        for(j=0;j<this->Nu;++j) {
             //量子状態の作成と初期化
             QuantumState state(this->Nq);
             //state.set_zero_state();
             //LRCの実行
-            for(l=1;l<this->depth+1;l++) {
+            for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }    
             }
             //測定と測定確率(ビット相関も)の計算
             sampling_result = state.sampling(this->Ns);
-            this->sim_result[i][j] = _calc_BitCorr_and_MP(sampling_result);
+            MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
+        //測定確率のモーメントを計算
+        this->teacher_data[i] = _calc_moment_of_MP(MP_list);
         std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
     }
     std::cout << std::endl;
@@ -119,6 +127,8 @@ void DataCreator::_lrc_sim(
 void DataCreator::_lrc_depolarizing_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
     
+    //各ユニタリにおけるqubitの測定確率を保持するベクトル
+    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -126,7 +136,7 @@ void DataCreator::_lrc_depolarizing_sim(
     //各qubitにかかるCPTPを事前に回路として作っておき各層で適用する
     QuantumCircuit depolarizing_circuit(this->Nq);
     //回路の作成
-    for(int i=0;i<this->Nq;i++) {
+    for(int i=0;i<this->Nq;++i) {
         depolarizing_circuit.add_gate(gate::DepolarizingNoise(i, this->noise_prob));
     }
 
@@ -134,13 +144,13 @@ void DataCreator::_lrc_depolarizing_sim(
     int i,j,l;
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
-    for(i=0;i<this->S;i++) {
-        for(j=0;j<this->Nu;j++) {
+    for(i=0;i<this->S;++i) {
+        for(j=0;j<this->Nu;++j) {
             //量子状態(密度行列)の生成と初期化
             DensityMatrix state(this->Nq);
             //state.set_zero_state();
             //ノイズありのLRCの実行
-            for(l=1;l<this->depth+1;l++) {
+            for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
@@ -149,8 +159,10 @@ void DataCreator::_lrc_depolarizing_sim(
             }
             //測定と測定確率(ビット相関も)の計算
             sampling_result = state.sampling(this->Ns);
-            this->sim_result[i][j] = _calc_BitCorr_and_MP(sampling_result);
+            MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
+        //測定確率のモーメントを計算
+        this->teacher_data[i] = _calc_moment_of_MP(MP_list);
         std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
     }
     std::cout << std::endl;
@@ -158,7 +170,9 @@ void DataCreator::_lrc_depolarizing_sim(
 
 void DataCreator::_lrc_MeasurementInduced_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
-
+    
+    //各ユニタリにおけるqubitの測定確率を保持するベクトル
+    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -178,7 +192,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     dim2_matrix(1, 1) = 1;
     ComplexMatrix kraus_measure_1 = sqrt(this->noise_prob) * dim2_matrix;
     //回路の作成
-    for(int i=0;i<this->Nq;i++) {
+    for(int i=0;i<this->Nq;++i) {
         p_measure_circuit.add_gate(
             gate::CPTP({
                 gate::DenseMatrix(i, kraus_identity),
@@ -192,13 +206,13 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     int i,j,l;
     //教師データ作成-sequential
     #pragma omp parallel for private(j, l, sampling_result)
-    for(i=0;i<this->S;i++) {
-        for(j=0;j<this->Nu;j++) {
+    for(i=0;i<this->S;++i) {
+        for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
             //state.set_zero_state();
             //LRCの実行
-            for(l=1;l<this->depth+1;l++) {
+            for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
@@ -206,7 +220,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
                 p_measure_circuit.update_quantum_state(&state);
             }
             //2層のLRCの追加
-            for(l=1;l>-1;l--) {
+            for(l=1;l>-1;--l) {
                 //l=1(奇数層)とl=0(偶数層)で実行
                 for(const auto& qubit_indecies : RU_index_list[l]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
@@ -216,20 +230,24 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             state.normalize(state.get_squared_norm());
             //測定と測定確率(ビット相関も)の計算
             sampling_result = state.sampling(this->Ns);
-            this->sim_result[i][j] = _calc_BitCorr_and_MP(sampling_result);
+            MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
+        //測定確率のモーメントを計算
+        this->teacher_data[i] = _calc_moment_of_MP(MP_list);
         std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
     }
     std::cout << std::endl;
 }
 
 void DataCreator::_rdc_sim() {
+    //各ユニタリにおけるqubitの測定確率を保持するベクトル
+    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
     
     //基底を変更する、全てのqubitにHadmardを適用する回路
     QuantumCircuit basis_change_circuit(this->Nq);
-    for(int i=0;i<this->Nq;i++) {
+    for(int i=0;i<this->Nq;++i) {
         basis_change_circuit.add_H_gate(i);
     }
 
@@ -237,20 +255,22 @@ void DataCreator::_rdc_sim() {
     int i,j,d;
     //教師データ作成
     #pragma omp parallel for private(j, d, sampling_result)
-    for(i=0;i<this->S;i++) {
-        for(j=0;j<this->Nu;j++) {
+    for(i=0;i<this->S;++i) {
+        for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
             //state.set_zero_state();
             //RDCの実行
-            for(d=0;d<this->depth;d++) {
+            for(d=0;d<this->depth;++d) {
                 state.multiply_elementwise_function(gen_RandomDiagonal_element);
                 basis_change_circuit.update_quantum_state(&state);
             }
             //測定と測定確率(ビット相関も)の計算
             sampling_result = state.sampling(this->Ns);
-            sim_result[i][j] = _calc_BitCorr_and_MP(sampling_result);
+            MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
+        //測定確率のモーメントを計算
+        this->teacher_data[i] = _calc_moment_of_MP(MP_list);
         std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
     }
     std::cout << std::endl;
@@ -281,8 +301,8 @@ void DataCreator::_run_preprocess() {
     this->comb_list = get_possibliyMax_bitCorr(this->Nq);
 
     //測定確率が保存されるvectorのサイズを事前に決定
-    this->sim_result.clear();
-    this->sim_result.resize(this->S, std::vector<std::vector<float>>(this->Nu, std::vector<float>(this->comb_list.size())));
+    this->teacher_data.clear();
+    this->teacher_data.resize(this->Nu, std::vector<float>(this->comb_list.size()));
 }
 
 void DataCreator::run_simulation() {
@@ -315,7 +335,7 @@ void DataCreator::run_simulation() {
         //実際に作成
         int count = 0;
         //深さが奇数のときの量子ビットのインデックスのリストを作る
-        for(int i=1;i<Nq-1;i++) {
+        for(int i=1;i<Nq-1;++i) {
             index_twoQubit.emplace_back(i);
             count++;
             if(count == 2){
@@ -333,7 +353,7 @@ void DataCreator::run_simulation() {
         } else {
             maxIndex_depthOdd = Nq;
         }
-        for(int i=0;i<maxIndex_depthOdd;i++) {
+        for(int i=0;i<maxIndex_depthOdd;++i) {
             index_twoQubit.emplace_back(i);
             count++;
             if(count == 2){
@@ -388,19 +408,45 @@ std::vector<float> DataCreator::_calc_BitCorr_and_MP(std::vector<ITYPE>& samplin
             }
             sum_bitcorr += bitcorr_oneshot;
         }
-        MP_list.emplace_back(sum_bitcorr/this->Ns);
+        MP_list.emplace_back(sum_bitcorr / this->Ns);
     }
 
     return MP_list;
 }
 
+std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float>>& MP_data) {
+    int Nq_prime = MP_data[0].size();
+    
+    std::vector<float> momments_of_MP;
+    momments_of_MP.reserve(Nq_prime*20);
+
+    std::vector<float> MP_mom_eachDim(Nq_prime, 0.0);
+
+    float sum_MP = 0.0;
+
+    for(int dim=1;dim<21;++dim) {
+        for(const auto& MP_eachU : MP_data) {
+            for(int j=0;j<Nq_prime;++j) {
+                MP_mom_eachDim[j] += pow(MP_eachU[j], dim);
+            }
+        }
+
+        for(auto& each_MP_mom : MP_mom_eachDim) {
+            momments_of_MP.emplace_back(each_MP_mom / this->Nu);
+            each_MP_mom = 0.0;
+        }
+    }
+
+    return momments_of_MP;
+}
+
 void DataCreator::_decimal_to_binarylist(std::vector<ITYPE>& result_dec, std::vector<std::vector<int>>& result_bin) {
     int meas_result;
 
-    for(int i=0;i<result_dec.size();i++) {
+    for(int i=0;i<result_dec.size();++i) {
         meas_result = result_dec[i];
         if(meas_result != 0) {
-            for(int j=0;j<log2(result_dec[i])+1;j++) {
+            for(int j=0;j<log2(result_dec[i])+1;++j) {
                 if(meas_result%2 == 1) {
                     result_bin[i][this->Nq-1-j] = 1;
                 }
@@ -428,14 +474,11 @@ void DataCreator::save_result() {
     //測定確率をCSVファイルで保存
     std::string file_name = "../result/" + unitary_str + "_" + date_ID + ".csv";
     std::ofstream csv_file(file_name);
-    for(const auto& each_S : this->sim_result) {
-        for(const auto& each_U : each_S) {
-            for(auto itr=each_U.begin(); itr!=each_U.end()-1; ++itr) {
-                csv_file << *itr << ",";
-            }
-            csv_file << each_U.back() << std::endl;
+    for(const auto& each_S : this->teacher_data) {
+        for(auto itr=each_S.begin(); itr!=each_S.end()-1; ++itr) {
+            csv_file << *itr << ",";
         }
-        csv_file << std::endl;
+        csv_file << each_S.back() << "\n";
     }
     csv_file.close();
 
@@ -460,7 +503,8 @@ void DataCreator::save_result() {
             config_file << " noise_operator : Measurement-Induced" << std::endl;
             config_file << " noise_prob : " << this->noise_prob << std::endl;
         }        
-        
     }
+    config_file << " bit corrlation : " << this->Nq << std::endl;
+    config_file << " dim of moments : 1~20 " << std::endl;
     config_file.close();
 }
