@@ -65,7 +65,7 @@ void DataCreator::set_parameter(std::string key, std::string val) {
 
 void DataCreator::_haar_sim() {
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -75,6 +75,7 @@ void DataCreator::_haar_sim() {
     //教師データ作成
     #pragma omp parallel for private(j, sampling_result)
     for(i=0;i<this->S;++i) {
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
@@ -94,7 +95,7 @@ void DataCreator::_lrc_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
 
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -103,6 +104,7 @@ void DataCreator::_lrc_sim(
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
         for(j=0;j<this->Nu;++j) {
             //量子状態の作成と初期化
             QuantumState state(this->Nq);
@@ -128,7 +130,7 @@ void DataCreator::_lrc_depolarizing_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
     
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -145,6 +147,7 @@ void DataCreator::_lrc_depolarizing_sim(
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
         for(j=0;j<this->Nu;++j) {
             //量子状態(密度行列)の生成と初期化
             DensityMatrix state(this->Nq);
@@ -172,7 +175,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
     
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -207,6 +210,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     //教師データ作成-sequential
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
@@ -241,7 +245,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
 
 void DataCreator::_rdc_sim() {
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
     
@@ -256,6 +260,7 @@ void DataCreator::_rdc_sim() {
     //教師データ作成
     #pragma omp parallel for private(j, d, sampling_result)
     for(i=0;i<this->S;++i) {
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
@@ -417,8 +422,8 @@ std::vector<float> DataCreator::_calc_BitCorr_and_MP(std::vector<ITYPE>& samplin
 std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float>>& MP_data) {
     int Nq_prime = MP_data[0].size();
     
-    std::vector<float> momments_of_MP;
-    momments_of_MP.reserve(Nq_prime*20);
+    std::vector<float> moments_of_MP;
+    moments_of_MP.reserve(Nq_prime*20);
 
     std::vector<float> MP_mom_eachDim(Nq_prime, 0.0);
 
@@ -432,12 +437,12 @@ std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float
         }
 
         for(auto& each_MP_mom : MP_mom_eachDim) {
-            momments_of_MP.emplace_back(each_MP_mom / this->Nu);
+            moments_of_MP.emplace_back(each_MP_mom / this->Nu);
             each_MP_mom = 0.0;
         }
     }
 
-    return momments_of_MP;
+    return moments_of_MP;
 }
 
 void DataCreator::_decimal_to_binarylist(std::vector<ITYPE>& result_dec, std::vector<std::vector<int>>& result_bin) {
