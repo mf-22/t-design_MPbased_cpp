@@ -45,10 +45,10 @@ inline void recursive_set(int n, int r, std::vector<std::vector<int>>& v, std::v
         std::vector<int> temp = pattern;
         int poped;
         int pop_next;
-        int pop_thre = n-1;
+        int pop_thre = n - 1;
 
         //patternの最後尾をインクリメントしていき組み合わせのリストvにpushしていく
-        for (int i=pattern[r-1];i<n;i++) {
+        for (int i=pattern[r-1];i<n;++i) {
             v.push_back(temp);
             temp[r-1] = i + 1;
         }
@@ -116,7 +116,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
     //1点相関のとき => 単に各インデックスを2次元配列で返す
     if (r == 1) {
         std::vector<int> p_list = {0};
-        for(int i=0;i<n;i++) {
+        for(int i=0;i<n;++i) {
             comb_list.push_back(p_list);
             p_list[0] = p_list[0] + 1;
         }
@@ -124,7 +124,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
     //n点相関(例.5qubit5点相関)のとき => 単に0からnまでの1次元のリストを返す
     else if (n == r) {
         std::vector<int> p_list;
-        for(int i=0;i<n;i++) {
+        for(int i=0;i<n;++i) {
             p_list.push_back(i);
         }
         comb_list.push_back(p_list);
@@ -132,7 +132,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
     //上記以外のk点相関のとき
     else {
         std::vector<int> p_list;
-        for(int i=0;i<r;i++) {
+        for(int i=0;i<r;++i) {
             p_list.push_back(i);
         }
         while (p_list.size() > 0) {
@@ -147,7 +147,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
 inline std::vector<std::vector<int>> get_possibliyMax_bitCorr(unsigned int num_qubits) {
     std::vector<std::vector<int>> bitCorr_list;
     
-    for(int i=1;i<num_qubits+1;i++) {
+    for(int i=1;i<num_qubits+1;++i) {
         create_comb_list(num_qubits, i, bitCorr_list);
     }
     

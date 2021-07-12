@@ -186,7 +186,7 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
-                    MP_list[i][j][k] = np.mean(bit_corr)
+                MP_list[i][j][k] = np.mean(bit_corr)
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
     
