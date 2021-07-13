@@ -89,7 +89,7 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
             for k in range(1, depth+1):
                 for qubit_index in RU_index_list[k%2]:
                     circuit = ccg.get_element(np.random.randint(11520))
-                    ccg.simulate_circuit_specific_qubit(circuit, state, qubit_index)
+                    ccg.simulate_circuit_specific_qubit(2, circuit, state, qubit_index)
             ## 測定を行う
             while True:
                 sample_dec = state.sampling(Ns)
@@ -171,7 +171,7 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
             state.set_Haar_random_state(haar_seed)
             ## ランダムクリフォードの実行
             circuit = ccg.get_element(gen_random_index(order))
-            ccg.simulate_circuit(circuit, state)
+            ccg.simulate_circuit(Nq, circuit, state)
             ## 測定を行う
             while True:
                 sample_dec = state.sampling(Ns)

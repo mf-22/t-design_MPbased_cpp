@@ -2,6 +2,7 @@
 import numpy as np
 from .group_base import GroupBase
 from util.common import I, X, Y, Z, H, S, CZ, list_product
+import qulacs
 
 """Reference
 Unique decomposition https://arxiv.org/abs/1310.6813
@@ -166,7 +167,7 @@ class CliffordCircuitGroup(GroupBase):
             result = result @ self._get_matrix(num_qubit, qind, mat)
         result = self._to_special_unitary(result)
         return result
-
+    """
     def simulate_circuit(self, circuit, state):
         import qulacs
         for qind, _, _, mat in circuit:
@@ -177,10 +178,26 @@ class CliffordCircuitGroup(GroupBase):
             gate.update_quantum_state(state)
 
     def simulate_circuit_specific_qubit(self, circuit, state, x):
-        import qulacs
         for qind, _, _, mat in circuit:
             if mat.shape[0] == 2:
                 gate = qulacs.gate.DenseMatrix(qind + x, mat)
             else:
                 gate = qulacs.gate.DenseMatrix([qind + x, qind + 1 + x], mat)
             gate.update_quantum_state(state)
+    """
+    def simulate_circuit(self, num_qubit, circuit, state):
+        for qind, _, _, mat in reversed(circuit):
+            if mat.shape[0] == 2:
+                gate = qulacs.gate.DenseMatrix(num_qubit - 1 - qind, mat)
+            else:
+                gate = qulacs.gate.DenseMatrix([num_qubit - 2 - qind, num_qubit - 1 - qind], mat)
+            gate.update_quantum_state(state)
+
+    def simulate_circuit_specific_qubit(self, num_qubit, circuit, state, x):
+        for qind, _, _, mat in reversed(circuit):
+            if mat.shape[0] == 2:
+                gate = qulacs.gate.DenseMatrix(num_qubit - 1 - qind + x, mat)
+            else:
+                gate = qulacs.gate.DenseMatrix([num_qubit - 2 - qind + x, num_qubit - 1 - qind + x], mat)
+            gate.update_quantum_state(state)
+            
