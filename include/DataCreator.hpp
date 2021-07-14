@@ -31,6 +31,8 @@ private:
     std::vector<std::vector<int>> comb_list;
     //最終的に作成するデータ, 測定確率(ビット相関込み)が保存されるベクトル
     std::vector<std::vector<float>> teacher_data;
+    //サンプリング結果の10進数の値を2進数に変換するためのマップ
+	std::vector<std::vector<int>> binary_num_list;
     
     /* メンバ関数 */
     //設定ファイルを読みに行く
@@ -47,8 +49,6 @@ private:
     std::vector<float> _calc_BitCorr_and_MP(std::vector<ITYPE>& sampling_result);
     //Nu個の測定確率の結果からモーメントの値を計算し、1次元のvectorにして返す
     std::vector<float> _calc_moment_of_MP(std::vector<std::vector<float>>& MP_list);
-    //int型の10進数の値を2進数のvector型に変換
-    void _decimal_to_binarylist(std::vector<ITYPE>& result_dec, std::vector<std::vector<int>>& result_bin);
 
 public:
     /* コンストラクタ */

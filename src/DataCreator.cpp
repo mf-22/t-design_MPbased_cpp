@@ -47,15 +47,13 @@ void DataCreator::read_configFile() {
     //入力ファイルの内容を順番に反映していく
     auto input_paras = _read_inputfile();
     for(auto itr = input_paras.begin(); itr != input_paras.end(); ++itr) {
-        if(this->parameters.find(itr->first) != this->parameters.end()) {
-            this->parameters[itr->first] = itr->second;
-        } else{
-            std::cerr << "Key error: " << itr->first << std::endl;
-        }
+        set_parameter(itr->first, itr->second);
     }
 }
 
 void DataCreator::set_parameter(std::string key, std::string val) {
+    //引数のkeyとvalueをもとにパラメータ(辞書型)の値を更新する
+    //keyが存在するときのみ更新し、存在しないときはエラーとする(新しく追加しない)
     if(this->parameters.find(key) != this->parameters.end()) {
         this->parameters[key] = val;
     } else{
@@ -307,7 +305,27 @@ void DataCreator::_run_preprocess() {
 
     //測定確率が保存されるvectorのサイズを事前に決定
     this->teacher_data.clear();
-    this->teacher_data.resize(this->Nu, std::vector<float>(this->comb_list.size()));
+    this->teacher_data.resize(this->S, std::vector<float>(this->comb_list.size()));
+
+    //2進数のリストを作成
+	this->binary_num_list.clear();
+    int num_decimal;
+    for (int i = 0; i < pow(2, this->Nq); ++i) {
+        //10進数の値
+		num_decimal = i;
+        //2進数に変換された値。vectorに保存される。
+        //-1で初期化して置いて、ビットの1が立つところだけを書き換えれば0=>-1の変換になる
+		std::vector<int> bit_Nq_size(this->Nq, -1);
+		if (num_decimal != 0) {
+			for (int j = 0; j < log2(i) + 1; ++j) {
+				if (num_decimal % 2 == 1) {
+					bit_Nq_size[this->Nq - 1 - j] = 1;
+				}
+				num_decimal /= 2;
+			}
+		}
+		this->binary_num_list.emplace_back(bit_Nq_size);
+	}
 }
 
 void DataCreator::run_simulation() {
@@ -392,42 +410,35 @@ void DataCreator::run_simulation() {
 std::vector<float> DataCreator::_calc_BitCorr_and_MP(std::vector<ITYPE>& sampling_result) {
     //測定確率が入ったリスト
     std::vector<float> MP_list;
-    //測定結果のビット列(0または1)を保持するリスト、-1で初期化
-    std::vector<std::vector<int>> sampling_result_bin(this->Ns, std::vector<int>(this->Nq, -1));
-    //測定結果を10進数から2進数に変換、-1で初期化してあるので、2進数にしたときの1の部分を書き換えれば良い
-    _decimal_to_binarylist(sampling_result, sampling_result_bin); 
 
     //各測定結果に対してビット相関を計算するので、shots回分のビット相関の値が出てくる。
     //これを足しこんでいき、最後に測定回数で割れば測定確率(期待値=:ビット相関の値)となる。
-    float sum_bitcorr;
+	float sum_bitcorr;
     int bitcorr_oneshot;
-    
-    //測定確率の計算
-    for(const auto& bit_index_list : this->comb_list){
-        //ビット相関を計算する位置を取得
-        sum_bitcorr = 0.0;
-        for(const auto& result_oneshot : sampling_result_bin) {
-            bitcorr_oneshot = 1;
-            for(const auto& qubit_index : bit_index_list) {
-                bitcorr_oneshot *= result_oneshot[qubit_index];
-            }
-            sum_bitcorr += bitcorr_oneshot;
-        }
-        MP_list.emplace_back(sum_bitcorr / this->Ns);
-    }
+
+	for (const auto& bit_index_list : this->comb_list) {
+		//ビット相関を計算する位置を取得
+		sum_bitcorr = 0.0;
+        for (const auto& result : sampling_result) {
+			bitcorr_oneshot = 1;
+			for (const auto& qubit_index : bit_index_list) {
+				bitcorr_oneshot *= this->binary_num_list[result][qubit_index];
+			}
+			sum_bitcorr += bitcorr_oneshot;
+		}
+		MP_list.emplace_back(sum_bitcorr / this->Ns);
+	}
 
     return MP_list;
 }
 
 std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float>>& MP_data) {
     int Nq_prime = MP_data[0].size();
-    
+
     std::vector<float> moments_of_MP;
     moments_of_MP.reserve(Nq_prime*20);
 
     std::vector<float> MP_mom_eachDim(Nq_prime, 0.0);
-
-    float sum_MP = 0.0;
 
     for(int dim=1;dim<21;++dim) {
         for(const auto& MP_eachU : MP_data) {
@@ -435,30 +446,13 @@ std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float
                 MP_mom_eachDim[j] += pow(MP_eachU[j], dim);
             }
         }
-
-        for(auto& each_MP_mom : MP_mom_eachDim) {
+        for(auto&& each_MP_mom : MP_mom_eachDim) {
             moments_of_MP.emplace_back(each_MP_mom / this->Nu);
             each_MP_mom = 0.0;
         }
     }
-
+    
     return moments_of_MP;
-}
-
-void DataCreator::_decimal_to_binarylist(std::vector<ITYPE>& result_dec, std::vector<std::vector<int>>& result_bin) {
-    int meas_result;
-
-    for(int i=0;i<result_dec.size();++i) {
-        meas_result = result_dec[i];
-        if(meas_result != 0) {
-            for(int j=0;j<log2(result_dec[i])+1;++j) {
-                if(meas_result%2 == 1) {
-                    result_bin[i][this->Nq-1-j] = 1;
-                }
-                meas_result /= 2;
-            }
-        }
-    }
 }
 
 void DataCreator::save_result() {
