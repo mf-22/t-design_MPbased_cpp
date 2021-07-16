@@ -308,24 +308,24 @@ void DataCreator::_run_preprocess() {
     this->teacher_data.resize(this->S, std::vector<float>(this->comb_list.size()));
 
     //2進数のリストを作成
-	this->binary_num_list.clear();
+    this->binary_num_list.clear();
     int num_decimal;
     for (int i = 0; i < pow(2, this->Nq); ++i) {
         //10進数の値
-		num_decimal = i;
+        num_decimal = i;
         //2進数に変換された値。vectorに保存される。
         //-1で初期化して置いて、ビットの1が立つところだけを書き換えれば0=>-1の変換になる
-		std::vector<int> bit_Nq_size(this->Nq, -1);
-		if (num_decimal != 0) {
-			for (int j = 0; j < log2(i) + 1; ++j) {
-				if (num_decimal % 2 == 1) {
-					bit_Nq_size[this->Nq - 1 - j] = 1;
-				}
-				num_decimal /= 2;
-			}
-		}
-		this->binary_num_list.emplace_back(bit_Nq_size);
-	}
+        std::vector<int> bit_Nq_size(this->Nq, -1);
+        if (num_decimal != 0) {
+            for (int j = 0; j < log2(i) + 1; ++j) {
+                if (num_decimal % 2 == 1) {
+                    bit_Nq_size[this->Nq - 1 - j] = 1;
+                }
+                num_decimal /= 2;
+            }
+        }
+        this->binary_num_list.emplace_back(bit_Nq_size);
+    }
 }
 
 void DataCreator::run_simulation() {
@@ -413,21 +413,21 @@ std::vector<float> DataCreator::_calc_BitCorr_and_MP(std::vector<ITYPE>& samplin
 
     //各測定結果に対してビット相関を計算するので、shots回分のビット相関の値が出てくる。
     //これを足しこんでいき、最後に測定回数で割れば測定確率(期待値=:ビット相関の値)となる。
-	float sum_bitcorr;
+    float sum_bitcorr;
     int bitcorr_oneshot;
 
-	for (const auto& bit_index_list : this->comb_list) {
-		//ビット相関を計算する位置を取得
-		sum_bitcorr = 0.0;
+    for (const auto& bit_index_list : this->comb_list) {
+        //ビット相関を計算する位置を取得
+        sum_bitcorr = 0.0;
         for (const auto& result : sampling_result) {
-			bitcorr_oneshot = 1;
-			for (const auto& qubit_index : bit_index_list) {
-				bitcorr_oneshot *= this->binary_num_list[result][qubit_index];
-			}
-			sum_bitcorr += bitcorr_oneshot;
-		}
-		MP_list.emplace_back(sum_bitcorr / this->Ns);
-	}
+            bitcorr_oneshot = 1;
+            for (const auto& qubit_index : bit_index_list) {
+                bitcorr_oneshot *= this->binary_num_list[result][qubit_index];
+            }
+            sum_bitcorr += bitcorr_oneshot;
+        }
+        MP_list.emplace_back(sum_bitcorr / this->Ns);
+    }
 
     return MP_list;
 }
@@ -501,7 +501,7 @@ void DataCreator::save_result() {
         } else if(this->noise_operator == 2) {
             config_file << " noise_operator : Measurement-Induced" << std::endl;
             config_file << " noise_prob : " << this->noise_prob << std::endl;
-        }        
+        }
     }
     config_file << " bit corrlation : " << this->Nq << std::endl;
     config_file << " dim of moments : 1~20 " << std::endl;

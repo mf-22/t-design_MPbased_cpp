@@ -32,7 +32,7 @@ private:
     //最終的に作成するデータ, 測定確率(ビット相関込み)が保存されるベクトル
     std::vector<std::vector<float>> teacher_data;
     //サンプリング結果の10進数の値を2進数に変換するためのマップ
-	std::vector<std::vector<int>> binary_num_list;
+    std::vector<std::vector<int>> binary_num_list;
     
     /* メンバ関数 */
     //設定ファイルを読みに行く
@@ -52,7 +52,7 @@ private:
 
 public:
     /* コンストラクタ */
-	DataCreator() {
+    DataCreator() {
         //パラメータの初期値を設定
         this->parameters["unitary_type"] = "0";
         this->parameters["S"] = "1000";
@@ -63,7 +63,10 @@ public:
         //this->parameters["seed"] = "8010";
         this->parameters["noise_operator"] = "0";
         this->parameters["noise_prob"] = "0.01";
-	}
+    }
+
+    /* デストラクタ */
+    ~DataCreator() {}
 
     //辞書型で一括でパラメータをセット
     void read_configFile();
