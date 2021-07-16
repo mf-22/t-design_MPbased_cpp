@@ -159,8 +159,8 @@ inline std::vector<std::vector<int>> get_possibliyMax_bitCorr(unsigned int num_q
  *  例) 2021年6月29日22時間58分45秒 => "20210629225845"
  */
 inline std::string getDatetimeStr() {
-    //Linux(GNU Compiler)
-    /*
+    //Linux(GNU, intel Compiler)
+    
     time_t t = time(nullptr);
     const tm* localTime = localtime(&t);
     std::stringstream s;
@@ -171,8 +171,8 @@ inline std::string getDatetimeStr() {
     s << std::setw(2) << std::setfill('0') << localTime->tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime->tm_min;
     s << std::setw(2) << std::setfill('0') << localTime->tm_sec;
-    */
     
+    /*
     //Windows(Visual C++ Compiler)
     time_t t;
     struct tm localTime;
@@ -186,7 +186,7 @@ inline std::string getDatetimeStr() {
     s << std::setw(2) << std::setfill('0') << localTime.tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime.tm_min;
     s << std::setw(2) << std::setfill('0') << localTime.tm_sec;
-    
+    */
     // std::stringにして値を返す
     return s.str();
 }

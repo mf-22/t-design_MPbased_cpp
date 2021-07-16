@@ -63,7 +63,7 @@ void DataCreator::set_parameter(std::string key, std::string val) {
 
 void DataCreator::_haar_sim() {
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -73,7 +73,7 @@ void DataCreator::_haar_sim() {
     //教師データ作成
     #pragma omp parallel for private(j, sampling_result)
     for(i=0;i<this->S;++i) {
-        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
@@ -93,7 +93,7 @@ void DataCreator::_lrc_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
 
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -102,7 +102,7 @@ void DataCreator::_lrc_sim(
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
-        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
         for(j=0;j<this->Nu;++j) {
             //量子状態の作成と初期化
             QuantumState state(this->Nq);
@@ -128,7 +128,7 @@ void DataCreator::_lrc_depolarizing_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
     
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -145,7 +145,7 @@ void DataCreator::_lrc_depolarizing_sim(
     //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
-        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
         for(j=0;j<this->Nu;++j) {
             //量子状態(密度行列)の生成と初期化
             DensityMatrix state(this->Nq);
@@ -173,7 +173,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list) {
     
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
 
@@ -208,7 +208,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     //教師データ作成-sequential
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
-        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
@@ -243,7 +243,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
 
 void DataCreator::_rdc_sim() {
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
-    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+    //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
     //測定結果を保存するベクトル
     std::vector<ITYPE> sampling_result;
     
@@ -258,7 +258,7 @@ void DataCreator::_rdc_sim() {
     //教師データ作成
     #pragma omp parallel for private(j, d, sampling_result)
     for(i=0;i<this->S;++i) {
-        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->Ns));
+        std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
         for(j=0;j<this->Nu;++j) {
             //量子状態の生成と初期化
             QuantumState state(this->Nq);
