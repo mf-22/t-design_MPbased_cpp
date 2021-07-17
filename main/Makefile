@@ -2,10 +2,6 @@ main:main.cpp
 	rm -f main
 	g++ -O3 -mtune=native -march=native -mfpmath=both -o main -I ../qulacs/include -I ../include -L ../qulacs/lib main.cpp ../src/DataCreator.cpp -fopenmp -lcppsim_static -lcsim_static
 
-backup:main_backup.cpp
-	rm -f main_backup
-	g++ -O3 -mtune=native -march=native -mfpmath=both -o main_backup -I ../qulacs/include -L ../qulacs/lib main_backup.cpp -fopenmp -lcppsim_static -lcsim_static
-
 icpc:main.cpp
 	rm -f main_icpc
 	icpc -fast -o main_icpc -I ../qulacs/include -L ../qulacs/lib -I ../include main.cpp ../src/DataCreator.cpp -qopenmp -lcppsim_static -lcsim_static
@@ -16,7 +12,6 @@ icpc_parallel:main.cpp
 
 clean:
 	rm -f main
-	rm -f main_backup
 	rm -f main_icpc
 	rm -f main_icpc_parallel
 
@@ -28,7 +23,6 @@ clean_data:
 
 clean_all:
 	rm -f main
-	rm -f main_backup
 	rm -f main_icpc
 	rm -f main_icpc_parallel
 	rm -f ../result/*.txt
