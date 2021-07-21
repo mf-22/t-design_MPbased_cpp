@@ -79,6 +79,13 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
     ccg = CliffordCircuitGroup(2)
     ##order = ccg.order <= 11520
 
+    ## 2進数のリストを作成
+    binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
+    for i in range(2**Nq):
+        binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
+        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num_list[i] = binary_num
+
     for i in range(S):
         ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
         haar_seed = np.random.randint(2147483648) #2^31
@@ -91,14 +98,7 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
                     circuit = ccg.get_element(np.random.randint(11520))
                     ccg.simulate_circuit_specific_qubit(2, circuit, state, qubit_index)
             ## 測定を行う
-            while True:
-                sample_dec = state.sampling(Ns)
-                if (2**Nq) not in sample_dec:
-                    break
-            ## 10進数表記の測定結果を2進数のビット列に変換
-            result_bin = np.array([list(bin(n)[2:].zfill(Nq)) for n in sample_dec]).astype(np.int8)
-            ## 0 => -1　に変換
-            result_bin[result_bin == 0] = -1
+            result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
@@ -120,6 +120,13 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
     cg = CliffordGroup(1)
     ##order = ccg.order <= 24
 
+    ## 2進数のリストを作成
+    binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
+    for i in range(2**Nq):
+        binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
+        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num_list[i] = binary_num
+
     for i in range(S):
         ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
         haar_seed = np.random.randint(2147483648) #2^31
@@ -134,14 +141,7 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
                     DenseMatrix(qubit_index, clif_matrix[0]).update_quantum_state(state)
                     DenseMatrix(qubit_index+1, clif_matrix[1]).update_quantum_state(state)
             ## 測定を行う
-            while True:
-                sample_dec = state.sampling(Ns)
-                if (2**Nq) not in sample_dec:
-                    break
-            ## 10進数表記の測定結果を2進数のビット列に変換
-            result_bin = np.array([list(bin(n)[2:].zfill(Nq)) for n in sample_dec]).astype(np.int8)
-            ## 0 => -1　に変換
-            result_bin[result_bin == 0] = -1
+            result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
@@ -163,6 +163,13 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
     ## クリフォード群の要素数を取得
     order = ccg.order
 
+    ## 2進数のリストを作成
+    binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
+    for i in range(2**Nq):
+        binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
+        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num_list[i] = binary_num
+
     for i in range(S):
         ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
         haar_seed = np.random.randint(2147483648) #2^31
@@ -173,14 +180,7 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
             circuit = ccg.get_element(gen_random_index(order))
             ccg.simulate_circuit(Nq, circuit, state)
             ## 測定を行う
-            while True:
-                sample_dec = state.sampling(Ns)
-                if (2**Nq) not in sample_dec:
-                    break
-            ## 10進数表記の測定結果を2進数のビット列に変換
-            result_bin = np.array([list(bin(n)[2:].zfill(Nq)) for n in sample_dec]).astype(np.int8)
-            ## 0 => -1　に変換
-            result_bin[result_bin == 0] = -1
+            result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
             ## ビット相関を計算し、測定確率を計算
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
