@@ -70,8 +70,10 @@ def gen_random_index(order):
             return clif_index
 
 def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
+    ## 最終的に作成する教師データの配列
+    teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
-    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
+    MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
     ## 量子状態の準備
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言、位数は11520
@@ -104,15 +106,19 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
-                MP_list[i][j][k] = np.mean(bit_corr)
+                MP_list[j][k] = np.mean(bit_corr)
+        ## モーメントの計算
+        teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
     
-    return MP_list
+    return teacher_data
 
 def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
+    ## 最終的に作成する教師データの配列
+    teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
-    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
+    MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
     ## 量子状態の準備
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言、位数は11520
@@ -147,14 +153,19 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
-                MP_list[i][j][k] = np.mean(bit_corr)
+                MP_list[j][k] = np.mean(bit_corr)
+        ## モーメントの計算
+        teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
-    return MP_list
+
+    return teacher_data
 
 def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
+    ## 最終的に作成する教師データの配列
+    teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
-    MP_list = np.empty(((S, Nu, len(comb_list))), dtype=np.float32)
+    MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
     ## 量子状態の準備
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言
@@ -186,11 +197,13 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
-                MP_list[i][j][k] = np.mean(bit_corr)
+                MP_list[j][k] = np.mean(bit_corr)
+        ## モーメントの計算
+        teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         print('\r{} / {} finished...'.format(i+1, S), end=(''))
     print('')
     
-    return MP_list
+    return teacher_data
 
 
 def main(parallel = True):
