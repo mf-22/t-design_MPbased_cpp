@@ -9,13 +9,16 @@ import glob
 ## 実行ファイル名を環境に応じて指定
 if platform.system() == "Windows":
     env = "win"
-    target_exe = "msvc_project.exe"
+    exe_cpp = "msvc_project.exe"
+    exe_py = "python random_clif.py"
 elif platform.system() == "Linux":
     env = "lin"
-    target_exe = "./main"
+    exe_cpp = "./main"
+    exe_py = "python3 random_clif.py"
 else:
     env = "lin"
-    target_exe = "./main"
+    exe_cpp = "./main"
+    exe_py = "python3 random_clif.py"
 
 def create_one_data(parallel):
     print('\n*** start creating one data ***')
@@ -71,14 +74,14 @@ def create_one_data(parallel):
     
     if create_index == 2:
         if parallel:
-            subprocess.run("python random_clif.py S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
-                            .format(S, Nu, Ns, Nq, local, depth, CNOT_1qC), shell=True)
+            subprocess.run("{} S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
+                            .format(exe_py, S, Nu, Ns, Nq, local, depth, CNOT_1qC), shell=True)
         else:
-            subprocess.run("python random_clif.py seq S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
-                            .format(S, Nu, Ns, Nq, local, depth, CNOT_1qC), shell=True)
+            subprocess.run("{} seq S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
+                            .format(exe_py, S, Nu, Ns, Nq, local, depth, CNOT_1qC), shell=True)
     if create_index == 1 or create_index == 3 or create_index == 4:
         subprocess.run("{} unitary_type={} S={} Nu={} Ns={} Nq={} depth={} noise_operator={} noise_prob={}" \
-                    .format(target_exe, create_index-1, S, Nu, Ns, Nq, depth, noise_ope, noise_prob), shell=True)
+                    .format(exe_cpp, create_index-1, S, Nu, Ns, Nq, depth, noise_ope, noise_prob), shell=True)
     
     print('\n\n  ***    All finished!!!    ***\n')
     
@@ -315,22 +318,22 @@ def auto_create(parallel):
         if circuit_id == 2:
             ## random clifford
             if parallel:
-                subprocess.run("python random_clif.py S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
-                                .format(S, Nu, Ns, Nq, i_local, i_depth, i_CNOT_1qC), shell=True)
+                subprocess.run("{} S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
+                                .format(exe_py, S, Nu, Ns, Nq, i_local, i_depth, i_CNOT_1qC), shell=True)
             else:
-                subprocess.run("python random_clif.py seq S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
-                                .format(S, Nu, Ns, Nq, i_local, i_depth, i_CNOT_1qC), shell=True)
+                subprocess.run("{} seq S={} Nu={} Ns={} Nq={} local={} depth={} CNOT_1qC={}" \
+                                .format(exe_py, S, Nu, Ns, Nq, i_local, i_depth, i_CNOT_1qC), shell=True)
         elif circuit_id == 1:
             ## haar measure
-            subprocess.run("{} unitary_type=0 S={} Nu={} Ns={} Nq={}".format(target_exe, S, Nu, Ns, Nq), shell=True)
+            subprocess.run("{} unitary_type=0 S={} Nu={} Ns={} Nq={}".format(exe_cpp, S, Nu, Ns, Nq), shell=True)
         elif circuit_id == 3:
             ## local random circuit
             subprocess.run("{} unitary_type=2 S={} Nu={} Ns={} Nq={} depth={} noise_operator={} noise_prob={}" \
-                        .format(target_exe, S, Nu, Ns, Nq, i_depth, i_noise_ope, i_noise_prob), shell=True)
+                        .format(exe_cpp, S, Nu, Ns, Nq, i_depth, i_noise_ope, i_noise_prob), shell=True)
         elif circuit_id == 4:
             ## random diagonal circuit
             subprocess.run("{} unitary_type=3 S={} Nu={} Ns={} Nq={} depth={}" \
-                        .format(target_exe, S, Nu, Ns, Nq, i_depth), shell=True)
+                        .format(exe_cpp, S, Nu, Ns, Nq, i_depth), shell=True)
 
         ## Move the created data to correct place
         ## get the path of the data just created now
