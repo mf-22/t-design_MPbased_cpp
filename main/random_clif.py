@@ -13,25 +13,40 @@ def input_parameters():
     """コマンドラインからパラメータの入力を受け取り辞書型に保存して返す関数
     """
     paras_dict = {}
-    ## input number of data you want to create(|S|)
-    print('input number of data (|S|) :', end=(' '))
-    paras_dict["S"] = int(input())
-    print('Nu :', end=(' '))
-    paras_dict["Nu"] = int(input())
-    print('Ns :', end=(' '))
-    paras_dict["Ns"] = int(input())
-    print('Nq :', end=(' '))
-    paras_dict["Nq"] = int(input())
-    print('Local random clifford?(1:=Yes, 0:=No) :', end=(' '))
-    local_in = int(input())
-    if local_in == 1:
-        paras_dict["local"] = True
-        print('input circuit depth :', end=(' '))
-        paras_dict["depth"] = int(input())
-        print('CNOT & 1q Clifford?(1:=Yes, 0:=No) :', end=(' '))
-        paras_dict["CNOT_1qC"] = int(input())
+
+    args = sys.argv
+    args.remove("random_clif.py")
+    if "seq" in args:
+        args.remove("seq")
+    if "sequential" in args:
+        args.remove("sequential")
+    
+    ## auto_create.pyから呼ばれて実行されるときはコマンドライン引数からパラメータを指定する 
+    if len(args) == 7:
+        for arg in args:
+            key, val = arg.split("=")
+            paras_dict[key] = int(val)
+
     else:
-        paras_dict["local"] = False
+        ## input number of data you want to create(|S|)
+        print('input number of data (|S|) :', end=(' '))
+        paras_dict["S"] = int(input())
+        print('Nu :', end=(' '))
+        paras_dict["Nu"] = int(input())
+        print('Ns :', end=(' '))
+        paras_dict["Ns"] = int(input())
+        print('Nq :', end=(' '))
+        paras_dict["Nq"] = int(input())
+        print('Local random clifford?(1:=Yes, 0:=No) :', end=(' '))
+        local_in = int(input())
+        if local_in == 1:
+            paras_dict["local"] = 1
+            print('input circuit depth :', end=(' '))
+            paras_dict["depth"] = int(input())
+            print('CNOT & 1q Clifford?(1:=Yes, 0:=No) :', end=(' '))
+            paras_dict["CNOT_1qC"] = int(input())
+        else:
+            paras_dict["local"] = 0
 
     return paras_dict
 
@@ -216,7 +231,7 @@ def main(parallel = True):
     start = time.perf_counter()
 
     ## Local Random Cliffordの計算
-    if paras_dict["local"]:
+    if paras_dict["local"] == 1:
         RU_index_list = []
         ## 深さが"奇数"のときのlocal random cliffordがかかるqubitのインデックス
         RU_index_list.append([i for i in range(1, paras_dict["Nq"]-1, 2)])
@@ -312,23 +327,22 @@ def main(parallel = True):
         f.write(" Nu : {}\n".format(paras_dict["Nu"]))
         f.write(" Ns : {}\n".format(paras_dict["Ns"]))
         f.write(" Nq : {}\n".format(paras_dict["Nq"]))
-        if paras_dict["local"]:
+        if paras_dict["local"] == 1:
             f.write("depth : {}\n".format(paras_dict["depth"]))
             f.write("CNOT&1q clif : {}\n".format(paras_dict["CNOT_1qC"]))
+        f.write("bit corrlation : {}\n".format(paras_dict["Nq"]))
+        f.write("dim of moments : 1~20\n")
     ## 色々出力
     print('\nData is saved as "clif_{}.npy".'.format(dt_index))
     print('Information(parameters) of this data is in "info_clif_{}.npy".'.format(dt_index))
     print('Creating Time : {}[s].'.format(finish-start))
-    print('\n\n  ***    All finished!!!    ***\n')
 
 
 if __name__ == '__main__':
     ## コマンドライン引数で"seq"または"sequential"とあった場合の逐次実行
+    parallel = True
     args = sys.argv
     if len(args) > 1:
-        if args[1] == "seq" or args[1] == "sequential":
-            main(parallel=False)
-        else:
-            print('Argument Error')
-    else:
-        main(parallel=True)
+        if "seq" in args or "sequential" in args:
+            parallel = False
+    main(parallel)    
