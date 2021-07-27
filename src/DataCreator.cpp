@@ -218,9 +218,13 @@ void DataCreator::_lrc_MeasurementInduced_sim(
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
-                //測定の適用
-                p_measure_circuit.update_quantum_state(&state);
+                //LRCの最後の2層には測定を挿入しない
+                if(l<this->depth-1){
+                    //測定の適用
+                    p_measure_circuit.update_quantum_state(&state);
+                }
             }
+            /*
             //2層のLRCの追加
             for(l=1;l>-1;--l) {
                 //l=1(奇数層)とl=0(偶数層)で実行
@@ -228,6 +232,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
             }
+            */
             //量子状態の正規化
             state.normalize(state.get_squared_norm());
             //測定と測定確率(ビット相関も)の計算
