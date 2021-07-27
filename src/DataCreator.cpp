@@ -205,7 +205,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     
     //ループカウンタ
     int i,j,l;
-    //教師データ作成-sequential
+    //教師データ作成
     #pragma omp parallel for private(j, l, sampling_result)
     for(i=0;i<this->S;++i) {
         std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
@@ -218,9 +218,13 @@ void DataCreator::_lrc_MeasurementInduced_sim(
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
-                //測定の適用
-                p_measure_circuit.update_quantum_state(&state);
+                //LRCの最後の2層には測定を挿入しない
+                if(l<this->depth-1){
+                    //測定の適用
+                    p_measure_circuit.update_quantum_state(&state);
+                }
             }
+            /*
             //2層のLRCの追加
             for(l=1;l>-1;--l) {
                 //l=1(奇数層)とl=0(偶数層)で実行
@@ -228,6 +232,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
                     gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
                 }
             }
+            */
             //量子状態の正規化
             state.normalize(state.get_squared_norm());
             //測定と測定確率(ビット相関も)の計算
@@ -358,7 +363,7 @@ void DataCreator::run_simulation() {
         //実際に作成
         int count = 0;
         //深さが奇数のときの量子ビットのインデックスのリストを作る
-        for(int i=1;i<Nq-1;++i) {
+        for(int i=1;i<Nq;++i) {
             index_twoQubit.emplace_back(i);
             count++;
             if(count == 2){
@@ -369,6 +374,8 @@ void DataCreator::run_simulation() {
         }
         RU_index_list.emplace_back(target_index);
         target_index.clear();
+        index_twoQubit.clear();
+        count = 0;
         //深さが偶数のときの量子ビットのインデックスのリストを作る
         unsigned int maxIndex_depthOdd;
         if (Nq%2 == 1) {
@@ -422,7 +429,8 @@ std::vector<float> DataCreator::_calc_BitCorr_and_MP(std::vector<ITYPE>& samplin
         for (const auto& result : sampling_result) {
             bitcorr_oneshot = 1;
             for (const auto& qubit_index : bit_index_list) {
-                bitcorr_oneshot *= this->binary_num_list[result][qubit_index];
+                //bitcorr_oneshot *= this->binary_num_list[result][qubit_index];
+                bitcorr_oneshot *= this->binary_num_list.at(result).at(qubit_index);
             }
             sum_bitcorr += bitcorr_oneshot;
         }
