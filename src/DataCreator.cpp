@@ -342,7 +342,12 @@ void DataCreator::run_simulation() {
 
     if(this->unitary_type == 0) {
         _haar_sim();
-    } else if(this->unitary_type == 2) {
+    }
+    else if(this->unitary_type == 1) {
+        std::cerr << "**Random Clifford is selected, but not implemented yet." << std::endl;
+        std::cerr << "**Please use python code(generated data is 0)." << std::endl;
+    }
+    else if(this->unitary_type == 2) {
         /**
          * 2qubitのHaarランダムユニタリがかかるインデックスのリストを用意
          * circuit.add_Random_unitary_gate()で渡す
@@ -403,7 +408,8 @@ void DataCreator::run_simulation() {
         else if(this->noise_operator == 2) {
             _lrc_MeasurementInduced_sim(RU_index_list);
         }
-    } else if(this->unitary_type == 2) {
+    }
+    else if(this->unitary_type == 3) {
         _rdc_sim();
     }
 
