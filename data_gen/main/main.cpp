@@ -14,8 +14,9 @@ int main(int argc, char *argv[]) {
             Creator.set_parameter(parameter_name, parameter_value);
         }
     }
-
+    //データの作成開始
     Creator.run_simulation();
+    //結果の保存
     Creator.save_result();
     
     return 0;

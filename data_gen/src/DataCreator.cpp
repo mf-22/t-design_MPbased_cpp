@@ -110,7 +110,9 @@ void DataCreator::_lrc_sim(
             //LRCの実行
             for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
-                    gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
+                    auto local_haar_gate = gate::RandomUnitary(qubit_indecies);
+                    local_haar_gate->update_quantum_state(&state);
+                    delete local_haar_gate;
                 }    
             }
             //測定と測定確率(ビット相関も)の計算
@@ -153,7 +155,9 @@ void DataCreator::_lrc_depolarizing_sim(
             //ノイズありのLRCの実行
             for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
-                    gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
+                    auto local_haar_gate = gate::RandomUnitary(qubit_indecies);
+                    local_haar_gate->update_quantum_state(&state);
+                    delete local_haar_gate;
                 }
                 //ノイズの適用
                 depolarizing_circuit.update_quantum_state(&state);
@@ -216,7 +220,9 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             //LRCの実行
             for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
-                    gate::RandomUnitary(qubit_indecies)->update_quantum_state(&state);
+                    auto local_haar_gate = gate::RandomUnitary(qubit_indecies);
+                    local_haar_gate->update_quantum_state(&state);
+                    delete local_haar_gate;
                 }
                 //LRCの最後の2層には測定を挿入しない
                 if(l<this->depth-1){
@@ -411,6 +417,9 @@ void DataCreator::run_simulation() {
     }
     else if(this->unitary_type == 3) {
         _rdc_sim();
+    }
+    else {
+        std::cerr << "**Simulation will not start. Check the value of unitary_type." << std::endl;
     }
 
     // 計測終了時間

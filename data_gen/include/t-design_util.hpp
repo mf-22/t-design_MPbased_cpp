@@ -186,7 +186,7 @@ inline std::string getDatetimeStr() {
     s << std::setw(2) << std::setfill('0') << localTime.tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime.tm_min;
     s << std::setw(2) << std::setfill('0') << localTime.tm_sec;
-    */
+    */   
     // std::stringにして値を返す
     return s.str();
 }

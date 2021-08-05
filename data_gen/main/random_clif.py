@@ -93,9 +93,9 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
     state = QuantumState(Nq)
     ## 2qubitのクリフォード群を宣言、位数は11520
     ## 4×4の行列ではなくゲート列が返ってくる
-    #ccg = CliffordCircuitGroup(2)
+    ccg = CliffordCircuitGroup(2)
     ##order = ccg.order <= 11520
-    cg = CliffordGroup(2)
+    #cg = CliffordGroup(2)
 
     ## 2進数のリストを作成
     binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
@@ -113,9 +113,9 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
             ## 2qubitのランダムクリフォードを互い違いにかけていく
             for k in range(1, depth+1):
                 for qubit_index in RU_index_list[k%2]:
-                    #circuit = ccg.get_element(np.random.randint(11520))
-                    #ccg.simulate_circuit_specific_qubit(2, circuit, state, qubit_index)
-                    DenseMatrix([qubit_index, qubit_index+1], cg.get_element(np.random.randint(11520))).update_quantum_state(state)
+                    circuit = ccg.get_element(np.random.randint(11520))
+                    ccg.simulate_circuit_specific_qubit(2, circuit, state, qubit_index)
+                    #DenseMatrix([qubit_index, qubit_index+1], cg.get_element(np.random.randint(11520))).update_quantum_state(state)
             ## 測定を行う
             result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
             ## ビット相関を計算し、測定確率を計算

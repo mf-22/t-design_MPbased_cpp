@@ -1,6 +1,8 @@
 result/
-main/main
-main/main_backup
 qulacs/
 __pycache__/
 msvc_project/
+
+data_gen/main/main
+data_gen/main/msvc_project.exe
+fp/main

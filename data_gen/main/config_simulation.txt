@@ -2,13 +2,13 @@
 ## We will use "split" function in #qulacs/cppsim/utility.hpp" to get the value.
 ## Cannot allow the space(OK:"S:100", NG:"S : 100")
 #Random Unitary Operator(0:Haar, 1:Clifford, 2:LRC, 3:RDC)
-unitary_type:2
+unitary_type:3
 #number of teacher data
-S:50
+S:100
 #number of unitary
-Nu:10
+Nu:100
 #number of sampling shot
-Ns:10
+Ns:100
 #number of qubit
 Nq:4
 #circuit depth
