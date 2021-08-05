@@ -490,7 +490,7 @@ void DataCreator::save_result() {
     } else if (this->unitary_type == 2) {
         unitary_str = "lrc";
     } else if (this->unitary_type == 3) {
-        unitary_str = "nakata";
+        unitary_str = "rdc";
     }
 
     //測定確率をCSVファイルで保存

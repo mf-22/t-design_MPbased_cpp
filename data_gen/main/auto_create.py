@@ -24,7 +24,7 @@ def create_one_data(parallel):
     print('\n*** start creating one data ***')
 
     ##decide which data you create
-    print('\ninput index == 1:haar  2:clifford  3:LRC  4:NAKATA')
+    print('\ninput index == 1:haar  2:clifford  3:LRC  4:RDC')
     while True:
         print('You create : ', end=(' '))
         create_index = int(input())
@@ -120,7 +120,7 @@ def auto_create(parallel):
 
     if custom == 'y':
         ## decide which data you create
-        print('\ninput index == 1:haar  2:clifford  3:LRC  4:NAKATA (0:don`t create)')
+        print('\ninput index == 1:haar  2:clifford  3:LRC  4:RDC (0:don`t create)')
         print('train1 : ', end=(' '))
         train1_type = int(input())
         print('train2 : ', end=(' '))
@@ -138,14 +138,14 @@ def auto_create(parallel):
 
     elif custom == 'n':
         ## decide 2 data type
-        print('\ninput index == 1:haar  2:clifford  3:LRC  4:NAKATA')
+        print('\ninput index == 1:haar  2:clifford  3:LRC  4:RDC')
         print('data_type1 : ', end=(' '))
         data_type1 = int(input())
         print('data_type2 : ', end=(' '))
         data_type2 = int(input())
 
     ## summarize the data
-    datatype_index = ['haar', 'clifford', 'LRC', 'NAKATA']
+    datatype_index = ['haar', 'clifford', 'LRC', 'RDC']
     order_array = []
     if custom == 'y':
         order_array.append(datatype_index[train1_type-1] + ' - train')
@@ -192,7 +192,7 @@ def auto_create(parallel):
     Ns = int(input())
     print('Nq :', end=(' '))
     Nq = int(input())
-    if 'clifford' in ''.join(order_array) or 'LRC' in ''.join(order_array) or 'NAKATA' in ''.join(order_array):
+    if 'clifford' in ''.join(order_array) or 'LRC' in ''.join(order_array) or 'RDC' in ''.join(order_array):
         ## detailed settings of circuit depth
         print('Do you change the depth according to the data? (y/n)')
         while True:
@@ -214,7 +214,7 @@ def auto_create(parallel):
                         local_array[i] = 1
                         print('  CNOT_1qC({}) (1:=Yes, 0:=No): '.format(order_array[i]), end=(' '))
                         CNOT_1qC_array[i] = int(input())
-                elif 'LRC' in order_array[i] or 'NAKATA' in order_array[i]:
+                elif 'LRC' in order_array[i] or 'RDC' in order_array[i]:
                     print('depth({}) : '.format(order_array[i]), end=(' '))
                     depth_array[i] = int(input())
         elif depth_custom == 'n':
@@ -297,8 +297,8 @@ def auto_create(parallel):
             if noise_custom == "y":
                 i_noise_ope = noise_ope_array[i]
                 i_noise_prob = noise_prob_array[i]
-        elif 'NAKATA' in order_array[i]:
-            ident = 'nakata'
+        elif 'RDC' in order_array[i]:
+            ident = 'rdc'
             circuit_id = 4
             if depth_custom == 'y':
                 i_depth = depth_array[i]

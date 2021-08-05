@@ -248,8 +248,8 @@ def sklearn_pca(repeat=False):
                 color = "green" #クリフォード系-testを緑
             elif info[0] == "lrc":
                 color = "green" #lrc-testも緑
-            elif info[0] == "nakata":
-                color = "green" #nakata-testも緑
+            elif info[0] == "rdc":
+                color = "green" #rdc-testも緑
 
             if label_choice == 0:
                 ## 予測ラベルなしのときは色分けあり、記号○でプロット

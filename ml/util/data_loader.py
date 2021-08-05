@@ -104,8 +104,8 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
             data_type = "clif"
         elif "lrc" in data_path:
             data_type = "lrc"
-        elif "nakata" in data_path:
-            data_type = "nakata"
+        elif "rdc" in data_path:
+            data_type = "rdc"
         
         ## データの使用目的を特定(train, valid, ...)
         if "train" in data_path:
