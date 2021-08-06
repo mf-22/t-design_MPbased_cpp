@@ -61,6 +61,26 @@ void DataCreator::set_parameter(std::string key, std::string val) {
     }
 }
 
+template <typename T> void DataCreator::_state_measurement(T& state, std::vector<ITYPE>& sampling_result) {
+    //測定
+    sampling_result = state.sampling(this->Ns);
+    //測定結果の値は0から2^n-1まで
+    int max_val = pow(2, this->Nq);
+    //サンプリング結果を順番に見ていき、最大値より大きければ測定をし直す
+    for(auto&& result : sampling_result) {
+        if(result >= max_val) {
+            while(true) {
+                auto re_sampled = state.sampling(1);
+                if(re_sampled[0] < max_val) {
+                    std::cout << "Re-sampled: " << result << " => " << re_sampled[0] << std::endl;
+                    result = re_sampled[0];
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void DataCreator::_haar_sim() {
     //各ユニタリにおけるqubitの測定確率を保持するベクトル
     //std::vector<std::vector<float>> MP_list(this->Nu, std::vector<float>(this->comb_list.size()));
@@ -79,7 +99,8 @@ void DataCreator::_haar_sim() {
             QuantumState state(this->Nq);
             state.set_Haar_random_state();
             //測定と測定確率(ビット相関も)の計算
-            sampling_result = state.sampling(this->Ns);
+            //sampling_result = state.sampling(this->Ns);
+            _state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -116,7 +137,8 @@ void DataCreator::_lrc_sim(
                 }    
             }
             //測定と測定確率(ビット相関も)の計算
-            sampling_result = state.sampling(this->Ns);
+            //sampling_result = state.sampling(this->Ns);
+            _state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -163,7 +185,8 @@ void DataCreator::_lrc_depolarizing_sim(
                 depolarizing_circuit.update_quantum_state(&state);
             }
             //測定と測定確率(ビット相関も)の計算
-            sampling_result = state.sampling(this->Ns);
+            //sampling_result = state.sampling(this->Ns);
+            _state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -242,7 +265,8 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             //量子状態の正規化
             state.normalize(state.get_squared_norm());
             //測定と測定確率(ビット相関も)の計算
-            sampling_result = state.sampling(this->Ns);
+            //sampling_result = state.sampling(this->Ns);
+            _state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -280,7 +304,8 @@ void DataCreator::_rdc_sim() {
                 basis_change_circuit.update_quantum_state(&state);
             }
             //測定と測定確率(ビット相関も)の計算
-            sampling_result = state.sampling(this->Ns);
+            //sampling_result = state.sampling(this->Ns);
+            _state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算

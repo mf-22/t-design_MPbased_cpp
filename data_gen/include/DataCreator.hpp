@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include "t-design_util.hpp"
+#include <cppsim/state.hpp>
 
 class DataCreator {
 private:
@@ -45,6 +46,8 @@ private:
     void _lrc_depolarizing_sim(std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list);
     void _lrc_MeasurementInduced_sim(std::vector<std::vector<std::vector<unsigned int>>>& RU_index_list);
     void _rdc_sim();
+    //サンプリング結果の値が2^nを超えないことを保証する測定(超えたらやり直す)
+    template <typename T> void _state_measurement(T& state, std::vector<ITYPE>& sampling_result);
     //サンプリング結果のビット列から測定確率を計算
     std::vector<float> _calc_BitCorr_and_MP(std::vector<ITYPE>& sampling_result);
     //Nu個の測定確率の結果からモーメントの値を計算し、1次元のvectorにして返す
