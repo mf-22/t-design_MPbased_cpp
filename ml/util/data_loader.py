@@ -38,6 +38,8 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
                 test_dataset  := テスト用のデータセットを要素に持つリスト(2次元のndarrayを要素に持つリスト)
                 test_labelset := テスト用のデータのラベルを要素に持つリスト(1次元のndarrayを要素に持つリスト)
     """
+    ## pathの区切り文字("/"か"\")をOSに応じて取得
+    SEP = os.sep
 
     ## 量子ビット数がいくつだったか取得
     Nq = read_parameter.get_num_qubits(data_name)
@@ -115,7 +117,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         elif "test" in data_path:
             count = 1
             while True:
-                if "test{}\\".format(count) in data_path:
+                if "test{}".format(count)+SEP in data_path:
                     purpose = "test{}".format(count)
                     break
                 else:
