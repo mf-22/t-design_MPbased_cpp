@@ -147,29 +147,28 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
     with open("datasets/{}/{}/{}/extract_parameters.txt".format(data_name, ml_alg, dt_index), mode="w") as f:
         f.write('k : {}\nk` : {}\n'.format(k, kp_list))
     
-
     ## 訓練用のデータを作る。データのリストから目的がtrainであるデータを抜き出して結合する
-    train_data = np.concatenate([temp_list[2] for temp_list in data_list if "train" == temp_list[1]], axis=0)
+    train_data = np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "train"], axis=0)
     ## 検証用のデータを作る。データのリストから目的がtrainであるデータを抜き出して結合する
-    valid_data = np.concatenate([temp_list[2] for temp_list in data_list if "valid" == temp_list[1]], axis=0)
+    valid_data = np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "valid"], axis=0)
     ## テスト用のデータを作る。テストデータは複数与えたいことがあるので、データセットを要素に持つリストで作成する
     test_dataset = []
     for i in range(1, testset_num+1):
         ## 検証用のデータを作る、データのリストから目的がtrainであるデータを抜き出して結合する
-        test_dataset.append(np.concatenate([temp_list[2] for temp_list in data_list if "test{}".format(i) == temp_list[1]], axis=0))
+        test_dataset.append(np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "test{}".format(i)], axis=0))
         
     if ml_alg == "PCA":
         """ PCAのときは、ラベルは"無し"か"機械学習アルゴリズムが予測した結果"を使うのでここではラベルは作らない
             そのかわり、それぞれのデータの種類とデータサイズを保持するリストを作成し返す
         """
         ## 訓練データを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
-        train_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if "train" == temp_list[1]]
+        train_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "train"]
         ## 検証データを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
-        valid_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if "valid" == temp_list[1]]
+        valid_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "valid"]
         ## テストデータを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
         test_infoset = []
         for i in range(1, testset_num+1):
-            temp_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if "test{}".format(i) == temp_list[1]]
+            temp_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "test{}".format(i)]
             test_infoset.append(temp_info)
 
         return train_data, train_info, valid_data, valid_info, test_dataset, test_infoset
@@ -179,12 +178,12 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         """
         ## 訓練用のデータのラベルを作る。データのリストから目的がtrainであるデータを抜き出し、ラベルを生成した後結合する
         train_label = np.concatenate(
-            [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if "train" == temp_list[1] ],
+            [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "train" ],
             axis=0
         )
         ## 検証用のデータのラベルを作る。データのリストから目的がvalidであるデータを抜き出し、ラベルを生成した後結合する
         valid_label = np.concatenate(
-            [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if "valid" == temp_list[1] ],
+            [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "valid" ],
             axis=0
         )
         ## テスト用のデータのラベルを作る。テストデータは複数与えたいことがあるので、データセットを要素に持つリストで作成する
@@ -192,7 +191,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         for i in range(1, testset_num+1):
             ## 検証用のデータを作る、データのリストから目的がtrainであるデータを抜き出して結合する
             temp_label = np.concatenate(
-                [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if "test{}".format(i) == temp_list[1] ],
+                [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "test{}".format(i) ],
                 axis=0
             )
             test_labelset.append(temp_label)
