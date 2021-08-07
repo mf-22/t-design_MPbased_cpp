@@ -25,7 +25,7 @@ def sklearn_linear_svm():
     if not os.path.isdir("datasets" + SEP + data_name):
         print('ERROR: Cannnot find the dataset "{}"'.format(data_name))
         return -1
-    ## svmの結果を保存するディレクトリのパスを作成
+    ## 線形サポートベクターマシンの結果を保存するディレクトリのパスを作成
     ## (例: datasets/dataset1/LinearSVM/20210729123234/)
     dir_path = "datasets" + SEP + data_name + SEP + "LinearSVM" + SEP + dt_index + SEP
     ## 結果を保存するディレクトリを作成

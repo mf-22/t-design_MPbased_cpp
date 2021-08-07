@@ -23,32 +23,32 @@ def draw_train_base(label_exist, axes, train_info, train_data, train_label):
             train_label(ndarray)         := 訓練データの予測ラベル(default=0)
     """
     p = 0 #リストの位置を示すポインタ
-    for i, info in enumerate(train_info):
-        if info[0] == "haar":
+    for data_type, data_size in train_info:
+        if data_type == "haar":
             color = "blue" #Haar-trainを青
-        elif info[0] == "clif":
+        elif data_type == "clif":
             color = "red" #クリフォード系-trainを赤
         else:
             color = "black" #他はひとまず黒にしておく
         
         if label_exist == 0:
-            axes.scatter(train_data[p:p+info[1],0], train_data[p:p+info[1],1], label=info[0]+"-train", marker='o', alpha=0.5, s=15, c=color)
+            axes.scatter(train_data[p:p+data_size,0], train_data[p:p+data_size,1], label=data_type+"-train", marker='o', alpha=0.5, s=15, c=color)
         else:
             ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
-            partial_label = train_label[p:p+info[1]]
+            partial_label = train_label[p:p+data_size]
             ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
             pred_0, pred_1 = [], []
             ## リスト内包表記でそれぞれのリストに分ける
-            [pred_0.append(val) if partial_label[j] == 0 else pred_1.append(val) for j,val in enumerate(train_data[p:p+info[1]])]
+            [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(train_data[p:p+data_size])]
             ## 散布図として描き込む
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
-                axes.scatter(pred_0[:,0], pred_0[:,1], label=info[0]+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                axes.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
-                axes.scatter(pred_1[:,0], pred_1[:,1], label=info[0]+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
+                axes.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
         ## ヒストグラムを描く
-        p += info[1] #ポインタを進める
+        p += data_size #ポインタを進める
 
 
 def sklearn_pca(repeat=False):
@@ -69,7 +69,7 @@ def sklearn_pca(repeat=False):
     if not os.path.isdir("datasets" + SEP + data_name):
         print('ERROR: Cannnot find the dataset "{}"'.format(data_name))
         return -1
-    ## deep learningの結果を保存するディレクトリのパスを作成
+    ## PCAの結果を保存するディレクトリのパスを作成
     ## (例: datasets/dataset1/PCA/20210729123234/)
     dir_path = "datasets" + SEP + data_name + SEP + "PCA" + SEP + dt_index + SEP
     ## 結果を保存するディレクトリを作成
@@ -143,35 +143,35 @@ def sklearn_pca(repeat=False):
     hist_bins = train_pred_label.shape[0] // 20 #ヒストグラムの棒の数
     ## 結合して作成していた訓練データを、1つずつ順番にプロットしていく
     p = 0 #リストの位置を示すポインタ
-    for i, info in enumerate(train_info):
-        if info[0] == "haar":
+    for data_type, data_size in train_info:
+        if data_type == "haar":
             color = "blue" #Haar-trainを青
-        elif info[0] == "clif":
+        elif data_type == "clif":
             color = "red" #クリフォード系-trainを赤
         else:
             color = "black" #他はひとまず黒にしておく
         
         if label_choice == 0:
             ## 予測ラベルなしのときは色分けあり、記号○でプロット
-            ax1.scatter(train_reduc[p:p+info[1], 0], train_reduc[p:p+info[1], 1], label=info[0]+"-train", marker='o', alpha=0.5, s=15, c=color)
+            ax1.scatter(train_reduc[p:p+data_size, 0], train_reduc[p:p+data_size, 1], label=data_type+"-train", marker='o', alpha=0.5, s=15, c=color)
         
         else:
             ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
-            partial_label = train_pred_label[p:p+info[1]]
+            partial_label = train_pred_label[p:p+data_size]
             ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
             pred_0, pred_1 = [], []
             ## リスト内包表記でそれぞれのリストに分ける
-            [pred_0.append(val) if partial_label[j] == 0 else pred_1.append(val) for j,val in enumerate(train_reduc[p:p+info[1]])]
+            [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(train_reduc[p:p+data_size])]
             ## 散布図として描き込む
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
-                ax1.scatter(pred_0[:,0], pred_0[:,1], label=info[0]+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                ax1.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
-                ax1.scatter(pred_1[:,0], pred_1[:,1], label=info[0]+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
+                ax1.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
         ## ヒストグラムを描く
-        ax2.hist(train_reduc[p:p+info[1], 0], label=info[0], bins=hist_bins, density=True, alpha=0.8, color=color)
-        p += info[1] #ポインタを進める
+        ax2.hist(train_reduc[p:p+data_size, 0], label=data_type, bins=hist_bins, density=True, alpha=0.8, color=color)
+        p += data_size #ポインタを進める
     ## 2つのグラフの各軸の名前やタイトル、グリッド線や凡例を表示させる
     ax1.set_xlabel("PC1")
     ax1.set_ylabel("PC2")
@@ -195,33 +195,33 @@ def sklearn_pca(repeat=False):
     draw_train_base(label_choice, ax, train_info, train_reduc, train_pred_label)
     ## 結合して作成していた検証データを、1つずつ順番にプロットしていく
     p = 0 #リストの位置を示すポインタ
-    for i, info in enumerate(valid_info):
-        if info[0] == "haar":
+    for data_type, data_size in valid_info:
+        if data_type == "haar":
             color = "yellow" #Haar-validを黄
-        elif info[0] == "clif":
+        elif data_type == "clif":
             color = "green" #クリフォード系-validを緑
         else:
             color = "black" #他はひとまず黒にしておく
         
         if label_choice == 0:
             ## 予測ラベルなしのときは色分けあり、記号○でプロット
-            ax.scatter(valid_reduc[p:p+info[1], 0], valid_reduc[p:p+info[1], 1], label=info[0]+"-valid", marker='o', alpha=0.5, s=15, c=color)
+            ax.scatter(valid_reduc[p:p+data_size, 0], valid_reduc[p:p+data_size, 1], label=data_type+"-valid", marker='o', alpha=0.5, s=15, c=color)
         
         else:
             ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
-            partial_label = valid_pred_label[p:p+info[1]]
+            partial_label = valid_pred_label[p:p+data_size]
             ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
             pred_0, pred_1 = [], []
             ## リスト内包表記でそれぞれのリストに分ける
-            [pred_0.append(val) if partial_label[j] == 0 else pred_1.append(val) for j,val in enumerate(valid_reduc[p:p+info[1]])]
+            [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(valid_reduc[p:p+data_size])]
             ## 散布図として描き込む
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
-                ax.scatter(pred_0[:,0], pred_0[:,1], label=info[0]+"-valid:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-valid:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
-                ax.scatter(pred_1[:,0], pred_1[:,1], label=info[0]+"-valid:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-        p += info[1] #ポインタを進める
+                ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-valid:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
+        p += data_size #ポインタを進める
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
     ax.set_title("A plot of training and validiation data")    
@@ -234,53 +234,61 @@ def sklearn_pca(repeat=False):
 
     """ 訓練データとテストデータでプロットする。
     """
-    for num, each_test_info in enumerate(test_infoset):
+    for test_num, each_test_info in enumerate(test_infoset):
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         draw_train_base(label_choice, ax, train_info, train_reduc, train_pred_label)
         ## 結合して作成していたテストデータを、1つずつ順番にプロットしていく
         p = 0 #リストの位置を示すポインタ
-        for i, info in enumerate(each_test_info):
+        for data_type, data_size in each_test_info:
             ## グラフの色を決める。Haar以外は緑にしているので、もしテストデータセット内に含まれるなら変更する。
-            if info[0] == "haar":
+            if data_type == "haar":
                 color = "yellow" #Haar-testを黄
-            elif info[0] == "clif":
+            elif data_type == "clif":
                 color = "green" #クリフォード系-testを緑
-            elif info[0] == "lrc":
+            elif data_type == "lrc":
                 color = "green" #lrc-testも緑
-            elif info[0] == "rdc":
+            elif data_type == "rdc":
                 color = "green" #rdc-testも緑
 
             if label_choice == 0:
                 ## 予測ラベルなしのときは色分けあり、記号○でプロット
-                ax.scatter(testset_reduc[i][p:p+info[1], 0], testset_reduc[i][p:p+info[1], 1], label=info[0]+"-test{}".format(num+1), marker='o', alpha=0.5, s=15, c=color)
+                ax.scatter(testset_reduc[test_num][p:p+data_size, 0], testset_reduc[test_num][p:p+data_size, 1], label=data_type+"-test{}".format(test_num+1), marker='o', alpha=0.5, s=15, c=color)
             
             else:
                 ## テストデータやラベルをリストにしていたものから対象のものを選択し、範囲を選んでデータを抜き出す
-                partial_data = testset_reduc[i][p:p+info[1]]
-                partial_label = test_pred_labelset[i][p:p+info[1]]
+                partial_data = testset_reduc[test_num][p:p+data_size]
+                partial_label = test_pred_labelset[test_num][p:p+data_size]
                 ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
                 pred_0, pred_1 = [], []
                 ## リスト内包表記でそれぞれのリストに分ける
-                [pred_0.append(val) if partial_label[j] == 0 else pred_1.append(val) for j, val in enumerate(partial_data)]
+                [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i, val in enumerate(partial_data)]
                 ## 散布図として描き込む
                 if len(pred_0) != 0:
                     pred_0 = np.array(pred_0)
-                    ax.scatter(pred_0[:,0], pred_0[:,1], label=info[0]+"-test{}:pred0".format(num+1), marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                    ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-test{}:pred0".format(test_num+1), marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
                 if len(pred_1) != 0:
                     pred_1 = np.array(pred_1)
-                    ax.scatter(pred_1[:,0], pred_1[:,1], label=info[0]+"-test{}:pred1".format(num+1), marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-                p += info[1] #ポインタを進める
+                    ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-test{}:pred1".format(test_num+1), marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
+                p += data_size #ポインタを進める
 
         ax.set_xlabel("PC1")
         ax.set_ylabel("PC2")
-        ax.set_title("A plot of training and test{} data".format(num+1))
+        ax.set_title("A plot of training and test{} data".format(test_num+1))
         ax.legend()
         ax.grid()
         fig.set_tight_layout(True)
-        plt.savefig(dir_path+"test{}.png".format(num+1))
+        plt.savefig(dir_path+"test{}.png".format(test_num+1))
         if not repeat:
             plt.show()
+
+    ## パラメータなどの保存
+    with open(dir_path+"paras.txt", mode="w") as f:
+        if label_choice == 0:
+            f.write("used label : None\n")
+        else:
+            f.write("used label : {}\n".format((label_path[label_choice-1].split(data_name+SEP)[-1]).split(SEP+"predicted_labels")[0]))
+
 
     ## 特徴量ベクトルの重要度を取得
     importances = pca.components_
