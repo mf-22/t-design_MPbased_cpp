@@ -137,7 +137,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
             
         ## 必要な部分を抽出する
         data = np.concatenate(
-            [data[:, Nq_prime*i:(Nq_prime*i)+Nq_prime] for i in kp_list],
+            [data[:, Nq_prime*(i-1):(Nq_prime*(i-1))+Nq_prime] for i in kp_list],
             axis=1
         )
 
