@@ -14,39 +14,25 @@ def input_parameters():
     """
     paras_dict = {}
 
-    args = sys.argv
-    args.remove("random_clif.py")
-    if "seq" in args:
-        args.remove("seq")
-    if "sequential" in args:
-        args.remove("sequential")
-    
-    ## auto_create.pyから呼ばれて実行されるときはコマンドライン引数からパラメータを指定する 
-    if len(args) == 7:
-        for arg in args:
-            key, val = arg.split("=")
-            paras_dict[key] = int(val)
-
+    ## input number of data you want to create(|S|)
+    print("input number of data (|S|) :", end=(" "))
+    paras_dict["S"] = int(input())
+    print("Nu :", end=(" "))
+    paras_dict["Nu"] = int(input())
+    print("Ns :", end=(" "))
+    paras_dict["Ns"] = int(input())
+    print("Nq :", end=(" "))
+    paras_dict["Nq"] = int(input())
+    print("Local random clifford?(1:=Yes, 0:=No) :", end=(" "))
+    local_in = int(input())
+    if local_in == 1:
+        paras_dict["local"] = 1
+        print("input circuit depth :", end=(" "))
+        paras_dict["depth"] = int(input())
+        print("CNOT & 1q Clifford?(1:=Yes, 0:=No) :", end=(" "))
+        paras_dict["CNOT_1qC"] = int(input())
     else:
-        ## input number of data you want to create(|S|)
-        print('input number of data (|S|) :', end=(' '))
-        paras_dict["S"] = int(input())
-        print('Nu :', end=(' '))
-        paras_dict["Nu"] = int(input())
-        print('Ns :', end=(' '))
-        paras_dict["Ns"] = int(input())
-        print('Nq :', end=(' '))
-        paras_dict["Nq"] = int(input())
-        print('Local random clifford?(1:=Yes, 0:=No) :', end=(' '))
-        local_in = int(input())
-        if local_in == 1:
-            paras_dict["local"] = 1
-            print('input circuit depth :', end=(' '))
-            paras_dict["depth"] = int(input())
-            print('CNOT & 1q Clifford?(1:=Yes, 0:=No) :', end=(' '))
-            paras_dict["CNOT_1qC"] = int(input())
-        else:
-            paras_dict["local"] = 0
+        paras_dict["local"] = 0
 
     return paras_dict
 
@@ -126,8 +112,8 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
                 MP_list[j][k] = np.mean(bit_corr)
         ## モーメントの計算
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
-        print('\r{} / {} finished...'.format(i+1, S), end=(''))
-    print('')
+        print("\r{} / {} finished...".format(i+1, S), end=(""))
+    print("")
     
     return teacher_data
 
@@ -173,8 +159,8 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
                 MP_list[j][k] = np.mean(bit_corr)
         ## モーメントの計算
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
-        print('\r{} / {} finished...'.format(i+1, S), end=(''))
-    print('')
+        print("\r{} / {} finished...".format(i+1, S), end=(""))
+    print("")
 
     return teacher_data
 
@@ -217,20 +203,27 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
                 MP_list[j][k] = np.mean(bit_corr)
         ## モーメントの計算
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
-        print('\r{} / {} finished...'.format(i+1, S), end=(''))
-    print('')
+        print("\r{} / {} finished...".format(i+1, S), end=(""))
+    print("")
     
     return teacher_data
 
 
-def main(parallel = True):
+def main(n_proc = -1, **kwargs):
     ## パラメータ読み込み
-    paras_dict = input_parameters()
+    if len(kwargs) == 0:
+        paras_dict = input_parameters()
+    else:
+        paras_dict = kwargs
     ## ビット相関計算時のqubitのインデックスのリスト
     comb_list = gen_comb_list(paras_dict["Nq"])
 
     ## 処理開始時の時間の取得
     start = time.perf_counter()
+
+    ## 生成するプロセス数を決定
+    if n_proc == -1:
+        n_proc = multiprocessing.cpu_count()
 
     ## Local Random Cliffordの計算
     if paras_dict["local"] == 1:
@@ -241,33 +234,32 @@ def main(parallel = True):
         RU_index_list.append([i for i in range(0, paras_dict["Nq"]-1, 2)])
 
         ## 並列実行
-        if parallel:
-            core_num = multiprocessing.cpu_count()
-            multi_S = int(paras_dict["S"] / core_num)
-            print('S = {}, core_num={}, multi_S={}, create_num={}'
-                  .format(paras_dict["S"], core_num, multi_S, core_num*multi_S))
+        if n_proc != 1:
+            multi_S = int(paras_dict["S"] / n_proc)
+            print("S = {}, n_proc={}, multi_S={}, create_num={}"
+                  .format(paras_dict["S"], n_proc, multi_S, n_proc*multi_S))
             ## S個をスレッド数できれいに割り切れたとき
-            if multi_S * core_num == paras_dict["S"]:
+            if multi_S * n_proc == paras_dict["S"]:
                 args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
                          paras_dict["Nq"], paras_dict["depth"],
-                         RU_index_list, comb_list) for i in range(core_num)]
+                         RU_index_list, comb_list) for i in range(n_proc)]
             ## 割り切れなかったとき
             else:
                 args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
                          paras_dict["Nq"], paras_dict["depth"],
-                         RU_index_list, comb_list) for i in range(core_num-1)]
+                         RU_index_list, comb_list) for i in range(n_proc-1)]
                 ## 最後の1つのスレッドに余り分をやらせる
-                remain_S = paras_dict["S"] - multi_S * core_num
+                remain_S = paras_dict["S"] - multi_S * n_proc
                 args.append((multi_S+remain_S, paras_dict["Nu"], paras_dict["Ns"],
                              paras_dict["Nq"], paras_dict["depth"],
                              RU_index_list, comb_list))
             ## 並列実行の開始
             if paras_dict["CNOT_1qC"] == 0:
-                p = multiprocessing.Pool(core_num)
+                p = multiprocessing.Pool(n_proc)
                 returns = p.starmap(sim_local_random_clifford, args)
                 p.close()
             elif paras_dict["CNOT_1qC"] == 1:
-                p = multiprocessing.Pool(core_num)
+                p = multiprocessing.Pool(n_proc)
                 returns = p.starmap(sim_local_random_clif_CNOTand1qubitClif, args)
                 p.close()
             ##　それぞれのスレッドの実行結果をひとまとめにする
@@ -287,25 +279,24 @@ def main(parallel = True):
 
     ## Random Cliffordの計算
     else:
-        if parallel:
-            core_num = multiprocessing.cpu_count()
-            multi_S = int(paras_dict["S"] / core_num)
-            print('S = {}, core_num={}, multi_S={}, create_num={}'
-                  .format(paras_dict["S"], core_num, multi_S, core_num*multi_S))
+        if n_proc != 1:
+            multi_S = int(paras_dict["S"] / n_proc)
+            print("S = {}, n_proc={}, multi_S={}, create_num={}"
+                  .format(paras_dict["S"], n_proc, multi_S, n_proc*multi_S))
             ## S個をスレッド数できれいに割り切れたとき
-            if multi_S * core_num == paras_dict["S"]:
+            if multi_S * n_proc == paras_dict["S"]:
                 args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], comb_list) for i in range(core_num)]
+                         paras_dict["Nq"], comb_list) for i in range(n_proc)]
             ## 割り切れなかったとき
             else:
                 args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], comb_list) for i in range(core_num-1)]
+                         paras_dict["Nq"], comb_list) for i in range(n_proc-1)]
                 ## 最後の1つのスレッドに余り分をやらせる
-                remain_S = paras_dict["S"] - multi_S * core_num
+                remain_S = paras_dict["S"] - multi_S * n_proc
                 args.append((multi_S+remain_S, paras_dict["Nu"], paras_dict["Ns"],
                              paras_dict["Nq"], comb_list))
             ## 並列実行の開始
-            p = multiprocessing.Pool(core_num)
+            p = multiprocessing.Pool(n_proc)
             returns = p.starmap(sim_random_clifford, args)
             p.close()
             ##　それぞれのスレッドの実行結果をひとまとめにする
@@ -324,7 +315,7 @@ def main(parallel = True):
     ## 結果の保存
     np.save("../result/clif_{}.npy".format(dt_index), result)
     ## パラメータの保存
-    with open("../result/info_clif_{}.txt".format(dt_index), mode='w') as f:
+    with open("../result/info_clif_{}.txt".format(dt_index), mode="w") as f:
         f.write("|S| : {}\n".format(paras_dict["S"]))
         f.write(" Nu : {}\n".format(paras_dict["Nu"]))
         f.write(" Ns : {}\n".format(paras_dict["Ns"]))
@@ -337,14 +328,19 @@ def main(parallel = True):
     ## 色々出力
     print('\nData is saved as "clif_{}.npy".'.format(dt_index))
     print('Information(parameters) of this data is in "info_clif_{}.npy".'.format(dt_index))
-    print('Creating Time : {}[s].'.format(finish-start))
+    print("Creating Time : {}[s].".format(finish-start))
 
 
-if __name__ == '__main__':
-    ## コマンドライン引数で"seq"または"sequential"とあった場合の逐次実行
-    parallel = True
+if __name__ == "__main__":
+    ## プロセスの生成をWindowsデフォルトのもので固定する
+    multiprocessing.set_start_method("spawn")
+    ## Cliffordのシミュレーション時の並列計算の並列プロセス数。
+    ## -1のとき使用できる最大スレッド数とし、-1をデフォルトとする。
+    n_proc = -1
+    ## コマンドライン引数で"n_proc=1"のような形で生成するプロセス数を指定
     args = sys.argv
-    if len(args) > 1:
-        if "seq" in args or "sequential" in args:
-            parallel = False
-    main(parallel)    
+    for arg in args:
+        if "n_proc=" in arg:
+            n_proc = int(arg.split("=")[-1])
+    
+    main(n_proc)
