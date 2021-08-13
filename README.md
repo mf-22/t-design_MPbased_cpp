@@ -39,10 +39,10 @@ Windowsの場合はトップにある`setup_win.bat`を、Linuxの場合は`setu
 そのときは[QualcsのCMakeLists.txt](https://github.com/qulacs/qulacs/blob/master/CMakeLists.txt)を編集しもう一度Qulacsをビルドしてください。Qulacsのビルド時にOMPをつけない
 ようなときも同様に編集してください。  
 その後はOSに応じて次の操作を行ってください：  
-### Windows, Linux共通の変更
-色々データ生成するときに、保存するフォルダ名が被らないようにデータ出力するときの現在時刻を取得しファイル名にするようにしています（例: 2021年8月5日21時50分20秒=>20210805215020）。  
+### ~~Windows, Linux共通の変更~~
+~~色々データ生成するときに、保存するフォルダ名が被らないようにデータ出力するときの現在時刻を取得しファイル名にするようにしています（例: 2021年8月5日21時50分20秒=>20210805215020）。  
 この文字列を生成するコードをコンパイラに応じて変更する必要があります。`data_gen/include/t-design.util.hpp`の[getDatetimeStr関数](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/include/t-design_util.hpp#L161)と
-`fp/calc_fp.cpp`の[getDatetimeStr関数](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/fp/calc_fp.cpp#L84)内のコードを使用するコンパイラに応じてコメントアウトしてください。
+`fp/calc_fp.cpp`の[getDatetimeStr関数](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/fp/calc_fp.cpp#L84)内のコードを使用するコンパイラに応じてコメントアウトしてください。~~
 
 ### Windows環境の場合  
 - データ生成のプログラム（data_gen/auto_crate.py）の設定
