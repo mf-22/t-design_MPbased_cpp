@@ -36,7 +36,7 @@ Windows-Anacondaの場合はconda_requirements.txtを、Linux-pip3の場合はpi
 ## Setup
 Windowsの場合はトップにある`setup_win.bat`を、Linuxの場合は`setup_linux.sh`を実行すると必要なディレクトリの作成とQulacsのクローン・ビルドをします。  
 ただ、データ生成のプログラムをコンパイルするときに最適化オプション(-O3等)を使うようMakefileに書いてあり、Qulacsでも同等の最適化オプションをつける必要がある場合があるかもしれません。
-そのときは[QualcsのCMakeLists.txt](https://github.com/qulacs/qulacs/blob/master/CMakeLists.txt#L19)を編集しもう一度Qulacsをビルドしてください。Qulacsのビルド時にOMPをつけない
+そのときは[QualcsのCMakeLists.txt](https://github.com/qulacs/qulacs/blob/master/CMakeLists.txt)を編集しもう一度Qulacsをビルドしてください。Qulacsのビルド時にOMPをつけない
 ようなときも同様に編集してください。  
 その後はOSに応じて次の操作を行ってください：  
 ### Windows, Linux共通の変更
@@ -47,15 +47,17 @@ Windowsの場合はトップにある`setup_win.bat`を、Linuxの場合は`setu
 ### Windows環境の場合  
 - データ生成のプログラム（data_gen/auto_crate.py）の設定
   - Visual Studio等を使って`main.cpp`をコンパイルし実行ファイル(\*\*\*.exe)を作成してください。その後、できた実行ファイルを`data_gen/main/`にコピーし、
-  ファイル名を`msvc_project.exe`に変更するか`data_gen/main/auto_create.py`の[12行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L12)を
+  ファイル名を`msvc_project.exe`に変更するか`data_gen/main/auto_create.py`の[14行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L14)を
   ```
   exe_cpp = "***.exe" (実行ファイル名)
   ```
-  に変更してください。また、Pythonの環境に応じてその次の行のpythonの実行コマンドも修正してください。
+  に変更してください。~~また、Pythonの環境に応じてその次の行のpythonの実行コマンドも修正してください。~~  
+  この[コミット](https://github.com/mf-22/t-design_MPbased_cpp/commit/c4c545a89c46cc6ea024cab2ec4723398c1aba02)からCliffordの実行が、subprocessによるプログラムの実行から
+  関数呼び出しになったので修正は不要です。
 
 ### Linux環境の場合
 基本的にMakeFileのmakeコマンドを使ってビルドすると実行ファイル`main`が生成されます。そのmainファイルを実行すればOKです。もし`data_gen/main/main.cpp`の実行ファイル名が
-`main`以外の場合は`data_gen/main/auto_create.py`の[16行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L16)を
+`main`以外の場合は`data_gen/main/auto_create.py`の[17行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L17)を
 ```
 exe_cpp = "./(実行ファイル名)"
 ```
@@ -91,7 +93,7 @@ datasets --- dataset1 --- info.txt
 #### auto_create.pyの実行例
 `python auto_create.py`を実行すると以下のような形で入力を求められます。パラメータの入力がすべて終わるとデータの作成を開始します。
 ```
-$python auto_create.py
+$python auto_create.py #引数に"n_proc=x"とするとCliffordのシミュレーションをx並列で行うように指定できる。
 
 *** start creating dataset ***
 input folder name : dataset1 #データセットの名前の入力。dataset{番号}を推奨。
