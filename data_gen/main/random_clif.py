@@ -235,24 +235,15 @@ def main(n_proc = -1, **kwargs):
 
         ## 並列実行
         if n_proc != 1:
-            multi_S = int(paras_dict["S"] / n_proc)
-            print("S = {}, n_proc={}, multi_S={}, create_num={}"
-                  .format(paras_dict["S"], n_proc, multi_S, n_proc*multi_S))
-            ## S個をスレッド数できれいに割り切れたとき
-            if multi_S * n_proc == paras_dict["S"]:
-                args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], paras_dict["depth"],
-                         RU_index_list, comb_list) for i in range(n_proc)]
-            ## 割り切れなかったとき
-            else:
-                args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], paras_dict["depth"],
-                         RU_index_list, comb_list) for i in range(n_proc-1)]
-                ## 最後の1つのスレッドに余り分をやらせる
-                remain_S = paras_dict["S"] - multi_S * n_proc
-                args.append((multi_S+remain_S, paras_dict["Nu"], paras_dict["Ns"],
-                             paras_dict["Nq"], paras_dict["depth"],
-                             RU_index_list, comb_list))
+            multi_S, remain = divmod(paras_dict["S"], n_proc)
+            print("S={}, n_proc={}, multi_S={}or{}"
+                  .format(paras_dict["S"], n_proc, multi_S+1, multi_S))
+            args = [(multi_S+1, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"],
+                     paras_dict["depth"], RU_index_list, comb_list)
+                     if i<remain else
+                     (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"],
+                     paras_dict["depth"], RU_index_list, comb_list)
+                     for i in range(n_proc)]
             ## 並列実行の開始
             if paras_dict["CNOT_1qC"] == 0:
                 p = multiprocessing.Pool(n_proc)
@@ -280,21 +271,13 @@ def main(n_proc = -1, **kwargs):
     ## Random Cliffordの計算
     else:
         if n_proc != 1:
-            multi_S = int(paras_dict["S"] / n_proc)
-            print("S = {}, n_proc={}, multi_S={}, create_num={}"
-                  .format(paras_dict["S"], n_proc, multi_S, n_proc*multi_S))
-            ## S個をスレッド数できれいに割り切れたとき
-            if multi_S * n_proc == paras_dict["S"]:
-                args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], comb_list) for i in range(n_proc)]
-            ## 割り切れなかったとき
-            else:
-                args = [(multi_S, paras_dict["Nu"], paras_dict["Ns"],
-                         paras_dict["Nq"], comb_list) for i in range(n_proc-1)]
-                ## 最後の1つのスレッドに余り分をやらせる
-                remain_S = paras_dict["S"] - multi_S * n_proc
-                args.append((multi_S+remain_S, paras_dict["Nu"], paras_dict["Ns"],
-                             paras_dict["Nq"], comb_list))
+            multi_S, remain = divmod(paras_dict["S"], n_proc)
+            print("S={}, n_proc={}, multi_S={}or{}"
+                  .format(paras_dict["S"], n_proc, multi_S+1, multi_S))
+            args = [(multi_S+1, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list)
+                     if i<remain else
+                     (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list)
+                     for i in range(n_proc)]
             ## 並列実行の開始
             p = multiprocessing.Pool(n_proc)
             returns = p.starmap(sim_random_clifford, args)
