@@ -1,8 +1,6 @@
-import multiprocessing
 import random_clif
 import numpy as np
 import sys
-import datetime
 import time
 import subprocess
 import platform
@@ -364,7 +362,6 @@ def auto_create(n_proc):
 
 ## main function
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn")
     n_proc = -1
     create_target = "dataset"
 

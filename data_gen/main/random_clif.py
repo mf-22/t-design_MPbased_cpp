@@ -55,7 +55,7 @@ def gen_comb_list(num_qubits):
 
 def gen_random_index(order):
     """ (0, order]の範囲でランダムに整数を生成し返す関数
-        似たことを行うものにnp.random.randintがあるが、上限が2^32であり
+        似たことを行うものにnp.random.randintがあるが、上限が2^31であり
         クリフォード群の位数よりも小さいため自作のものを用いる
     """
     d = str(order)
@@ -70,7 +70,10 @@ def gen_random_index(order):
         if clif_index < order:
             return clif_index
 
-def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
+def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list, np_seed):
+    ## numpyの乱数のシードを指定, OSに依存しないように
+    np.random.seed(np_seed)
+
     ## 最終的に作成する教師データの配列
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
@@ -117,7 +120,10 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
     
     return teacher_data
 
-def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list, comb_list):
+def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list, comb_list, np_seed):
+    ## numpyの乱数のシードを指定, OSに依存しないように
+    np.random.seed(np_seed)
+
     ## 最終的に作成する教師データの配列
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
@@ -164,7 +170,10 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
 
     return teacher_data
 
-def sim_random_clifford(S, Nu, Ns, Nq, comb_list):
+def sim_random_clifford(S, Nu, Ns, Nq, comb_list, np_seed):
+    ## numpyの乱数のシードを指定, OSに依存しないように
+    np.random.seed(np_seed)
+
     ## 最終的に作成する教師データの配列
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
     ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
@@ -239,11 +248,11 @@ def main(n_proc = -1, **kwargs):
             print("S={}, n_proc={}, multi_S={}or{}"
                   .format(paras_dict["S"], n_proc, multi_S+1, multi_S))
             args = [(multi_S+1, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"],
-                     paras_dict["depth"], RU_index_list, comb_list)
-                     if i<remain else
+                     paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
+                    if i < remain else
                      (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"],
-                     paras_dict["depth"], RU_index_list, comb_list)
-                     for i in range(n_proc)]
+                     paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
+                    for i in range(n_proc)]
             ## 並列実行の開始
             if paras_dict["CNOT_1qC"] == 0:
                 p = multiprocessing.Pool(n_proc)
@@ -260,13 +269,11 @@ def main(n_proc = -1, **kwargs):
         else:
             ## 量子回路シミュレーションと測定確率の計算
             if paras_dict["CNOT_1qC"] == 0:
-                result = sim_local_random_clifford(paras_dict["S"],  paras_dict["Nu"],
-                                                paras_dict["Ns"], paras_dict["Nq"],
-                                                paras_dict["depth"], RU_index_list, comb_list)
+                result = sim_local_random_clifford(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], paras_dict["Nq"],
+                                                   paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
             elif paras_dict["CNOT_1qC"] == 1:
-                result = sim_local_random_clif_CNOTand1qubitClif(paras_dict["S"],  paras_dict["Nu"],
-                                                paras_dict["Ns"], paras_dict["Nq"],
-                                                paras_dict["depth"], RU_index_list, comb_list)
+                result = sim_local_random_clif_CNOTand1qubitClif(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], paras_dict["Nq"],
+                                                                 paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
 
     ## Random Cliffordの計算
     else:
@@ -274,10 +281,10 @@ def main(n_proc = -1, **kwargs):
             multi_S, remain = divmod(paras_dict["S"], n_proc)
             print("S={}, n_proc={}, multi_S={}or{}"
                   .format(paras_dict["S"], n_proc, multi_S+1, multi_S))
-            args = [(multi_S+1, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list)
-                     if i<remain else
-                     (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list)
-                     for i in range(n_proc)]
+            args = [(multi_S+1, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list, np.random.randint(2147483648))
+                    if i < remain else
+                    (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list, np.random.randint(2147483648))
+                    for i in range(n_proc)]
             ## 並列実行の開始
             p = multiprocessing.Pool(n_proc)
             returns = p.starmap(sim_random_clifford, args)
@@ -287,8 +294,8 @@ def main(n_proc = -1, **kwargs):
 
         else:
             ## 量子回路シミュレーションと測定確率の計算
-            result = sim_random_clifford(paras_dict["S"],  paras_dict["Nu"],
-                                         paras_dict["Ns"], paras_dict["Nq"], comb_list)
+            result = sim_random_clifford(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], 
+                                         paras_dict["Nq"], comb_list, np.random.randint(2147483648))
     
     ## 処理終了時の時間の取得
     finish = time.perf_counter()
@@ -315,8 +322,6 @@ def main(n_proc = -1, **kwargs):
 
 
 if __name__ == "__main__":
-    ## プロセスの生成をWindowsデフォルトのもので固定する
-    multiprocessing.set_start_method("spawn")
     ## Cliffordのシミュレーション時の並列計算の並列プロセス数。
     ## -1のとき使用できる最大スレッド数とし、-1をデフォルトとする。
     n_proc = -1
