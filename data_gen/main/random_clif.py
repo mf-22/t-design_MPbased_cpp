@@ -332,3 +332,23 @@ if __name__ == "__main__":
             n_proc = int(arg.split("=")[-1])
     
     main(n_proc)
+
+    """
+    ## スパコンのジョブ形式で実行するときは以下を使う
+    ## デフォルトのパラメータ
+    paras = {"S":10000, "Nu":1000, "Ns":1000, "Nq":5, "local":0, "depth":0, "CNOT_1qC":0}
+    n_proc = 8
+    ## コマンドライン引数を取り込む
+    args = sys.argv
+    for arg in args:
+        if "=" in arg:
+            key,val = arg.split("=")
+            if key == "n_proc":
+                n_proc = int(val)
+            elif key in paras:
+                paras[key] = int(val)
+            else:
+                print('**KEY ERROR: "{}" is not exist'.format(key))
+    
+    main(n_proc, **paras)
+    """
