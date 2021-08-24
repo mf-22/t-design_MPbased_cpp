@@ -11,6 +11,7 @@
 #include <cppsim/gate_general.hpp>
 #include <cppsim/gate_merge.hpp>
 #include <cppsim/gate_matrix.hpp>
+#include <omp.h>
 
 
 std::map<std::string, std::string> DataCreator::_read_inputfile() {
@@ -105,7 +106,10 @@ void DataCreator::_haar_sim() {
         }
         //測定確率のモーメントを計算
         this->teacher_data[i] = _calc_moment_of_MP(MP_list);
-        std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
+        //マスタースレッドの進捗を表示
+        if (omp_get_thread_num() == 0) {
+            std::cout << "\r" << i+1 << "/" << this->S/omp_get_num_threads() << " finished...(master thread)" << std::string(20, ' ');
+        }
     }
     std::cout << std::endl;
 }
@@ -143,7 +147,10 @@ void DataCreator::_lrc_sim(
         }
         //測定確率のモーメントを計算
         this->teacher_data[i] = _calc_moment_of_MP(MP_list);
-        std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
+        //マスタースレッドの進捗を表示
+        if (omp_get_thread_num() == 0) {
+            std::cout << "\r" << i+1 << "/" << this->S/omp_get_num_threads() << " finished...(master thread)" << std::string(20, ' ');
+        }
     }
     std::cout << std::endl;
 }
@@ -191,7 +198,10 @@ void DataCreator::_lrc_depolarizing_sim(
         }
         //測定確率のモーメントを計算
         this->teacher_data[i] = _calc_moment_of_MP(MP_list);
-        std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
+        //マスタースレッドの進捗を表示
+        if (omp_get_thread_num() == 0) {
+            std::cout << "\r" << i+1 << "/" << this->S/omp_get_num_threads() << " finished...(master thread)" << std::string(20, ' ');
+        }
     }
     std::cout << std::endl;
 }
@@ -271,7 +281,10 @@ void DataCreator::_lrc_MeasurementInduced_sim(
         }
         //測定確率のモーメントを計算
         this->teacher_data[i] = _calc_moment_of_MP(MP_list);
-        std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
+        //マスタースレッドの進捗を表示
+        if (omp_get_thread_num() == 0) {
+            std::cout << "\r" << i+1 << "/" << this->S/omp_get_num_threads() << " finished...(master thread)" << std::string(20, ' ');
+        }
     }
     std::cout << std::endl;
 }
@@ -310,7 +323,10 @@ void DataCreator::_rdc_sim() {
         }
         //測定確率のモーメントを計算
         this->teacher_data[i] = _calc_moment_of_MP(MP_list);
-        std::cout << "\r" << i+1 << "/" << this->S << " finished..." << std::string(20, ' ');
+        //マスタースレッドの進捗を表示
+        if (omp_get_thread_num() == 0) {
+            std::cout << "\r" << i+1 << "/" << this->S/omp_get_num_threads() << " finished...(master thread)" << std::string(20, ' ');
+        }
     }
     std::cout << std::endl;
 }
