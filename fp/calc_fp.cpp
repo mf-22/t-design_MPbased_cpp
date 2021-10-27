@@ -82,8 +82,8 @@ ComplexMatrix gen_haar_RU(unsigned int num_qubits) {
  *  例) 2021年6月29日22時間58分45秒 => "20210629225845"
  */
 inline std::string getDatetimeStr() {
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
     //Linux(GNU, intel Compiler)
-    
     time_t t = time(nullptr);
     const tm* localTime = localtime(&t);
     std::stringstream s;
@@ -94,8 +94,7 @@ inline std::string getDatetimeStr() {
     s << std::setw(2) << std::setfill('0') << localTime->tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime->tm_min;
     s << std::setw(2) << std::setfill('0') << localTime->tm_sec;
-    
-    /*
+#elif _MSC_VER
     //Windows(Visual C++ Compiler)
     time_t t;
     struct tm localTime;
@@ -109,7 +108,7 @@ inline std::string getDatetimeStr() {
     s << std::setw(2) << std::setfill('0') << localTime.tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime.tm_min;
     s << std::setw(2) << std::setfill('0') << localTime.tm_sec;
-    */
+#endif
     // std::stringにして値を返す
     return s.str();
 }
@@ -339,9 +338,9 @@ int main() {
     //実行例
     /* パラメータの指定 */
     int ntimes = 10;
-    std::vector<int> Nq_list = { 3,4,5,6,7,8,9 };
-    std::vector<int> depth_list = { 2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
-    std::vector<int> t_list = { 2,3,4,5 };
+    std::vector<int> Nq_list = { 10 };
+    std::vector<int> depth_list = { 8, 9,10,11,12 };
+    std::vector<int> t_list = { 3 };
     /* 回路の指定 */
     std::string circ_type = "LRC";
     //std::string circ_type = "RDC";
