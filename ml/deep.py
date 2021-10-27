@@ -71,8 +71,8 @@ def deep_learning(repeat=False):
     ## 機械学習のハイパーパラメータを指定
     hidden_node_num = input_node_num #中間層のノード数
     hidden_layer_num = 1 #中間層の層数
-    epoch = 10
-    batch = 4
+    epoch = 100
+    batch = 128
 
     ## 空のNNモデルを生成
     model = tf.keras.Sequential()
@@ -82,14 +82,17 @@ def deep_learning(repeat=False):
     model.add(tf.keras.layers.Activation("relu"))
     ## 中間層を追加
     for _ in range(hidden_layer_num):
-        model.add(tf.keras.layers.Dense(input_node_num, input_dim=input_node_num))
+        #model.add(tf.keras.layers.Dense(hidden_node_num, input_dim=input_node_num))
+        model.add(tf.keras.layers.Dense(hidden_node_num))
         #model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Activation("relu"))
+        #model.add(tf.keras.layers.Dropout(0.5))
     ## 出力層を追加
-    model.add(tf.keras.layers.Dense(1, input_dim=input_node_num, activation="sigmoid"))
+    #model.add(tf.keras.layers.Dense(1, input_dim=input_node_num, activation="sigmoid"))
+    model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
     ##set learing rate(keras's adam default = 0.001)
-    learning_rate = 1.0 * 10**(-4)
+    learning_rate = 1.0 * 10**(-5)
     ##set the optimizer, loss function and others
     opt = tf.keras.optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,
