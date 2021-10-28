@@ -219,15 +219,15 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     QuantumCircuit p_measure_circuit(this->Nq);
     //Identity
     ComplexMatrix dim2_matrix = Eigen::MatrixXd::Zero(2, 2);
-    dim2_matrix(0, 0) = 1;
-    dim2_matrix(1, 1) = 1;
+    dim2_matrix(0, 0) = 1.0;
+    dim2_matrix(1, 1) = 1.0;
     ComplexMatrix kraus_identity = sqrt(1-this->noise_prob) * dim2_matrix;
     //0測定
-    dim2_matrix(1, 1) = 0;
+    dim2_matrix(1, 1) = 0.0;
     ComplexMatrix kraus_measure_0 = sqrt(this->noise_prob) * dim2_matrix;
     //1測定
-    dim2_matrix(0, 0) = 0;
-    dim2_matrix(1, 1) = 1;
+    dim2_matrix(0, 0) = 0.0;
+    dim2_matrix(1, 1) = 1.0;
     ComplexMatrix kraus_measure_1 = sqrt(this->noise_prob) * dim2_matrix;
     //回路の作成
     for(int i=0;i<this->Nq;++i) {
