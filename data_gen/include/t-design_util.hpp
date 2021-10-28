@@ -12,10 +12,10 @@
 /** ランダム対角ユニタリ行列の対角成分を生成する関数
  * qulacsのmultiply_elementwise_functionに渡す
  */
-inline std::complex<float> gen_RandomDiagonal_element(ITYPE dummy) {
+inline std::complex<double> gen_RandomDiagonal_element(ITYPE dummy) {
     //calculate exp( (0,2pi] * i )
     Random random;
-    return std::exp(std::complex<float>(0.0, random.uniform() * 2 * M_PI));
+    return std::exp(std::complex<double>(0.0, random.uniform() * 2 * M_PI));
 }
 
 /** 組み合わせ(nCr)を作るために利用する関数
