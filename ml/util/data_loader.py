@@ -1,9 +1,10 @@
-from . import label_generator, read_parameter
+from . import label_generator, read_parameter, ElementSearch
 
 import glob
 import os
 
 import numpy as np
+import random
 
 
 def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
@@ -58,7 +59,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
     dataset_path.extend(glob.glob('datasets/{}/test/**/*_*.npy'.format(data_name), recursive=True))
     dataset_path.extend(glob.glob('datasets/{}/test/**/*_*.csv'.format(data_name), recursive=True))
 
-    ## globによって得られるリストの順序がOSに依存していので、ソートして同じになるようにしておく
+    ## globによって得られるリストの順序がOSに依存しているので、ソートして同じになるようにしておく
     dataset_path.sort()
     ## テストデータセットの数を取得
     testset_num = len(glob.glob('datasets/{}/test/*'.format(data_name)))
@@ -74,6 +75,8 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         #print('input k(Max={}) :'.format(Nq), end=(' '))
         #k = int(input())
         k = Nq
+        #specific_k_corr_point = np.sort(random.sample([i for i in range(Nq_prime)], Nq_prime//4))
+        #print("specific_k_corr_point =", specific_k_corr_point)
     if len(kp_list) == 0:
         print('\ninput k prime')
         print('  input min(min=1) :', end=(' '))
@@ -93,6 +96,9 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
           [3] : 特徴量ベクトルのデータサイズ(int)
     """
     data_list = []
+    ## ビット相関の特定の所だけを抜いくためにばしょを指定した配列を作成
+    mom_num = len(kp_list)
+    #specific_k_corr_point = np.ravel([specific_k_corr_point*i for i in range(1, mom_num+1)])
 
     ## 順番に抽出していく
     for data_path in dataset_path:
@@ -141,7 +147,11 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
             axis=1
         )
 
+        ## ビット相関の特定の所だけを抜いてくる
+        #data = data[:, specific_k_corr_point] #ファンシーインデックス
+
         ## リストに追加
+        #print(data_type, purpose, data.shape[0])
         data_list.append([data_type, purpose, data, data.shape[0]])
     print("\r" + " "*(len(dataset_path[-1])+12) + "\n")
  
@@ -211,19 +221,23 @@ def load_pred_labels(path):
             valid_label(ndarray) := 検証データの予測ラベル
             test_labelset(list of ndarray) := テストデータの予測ラベルを要素に持つリスト
     """
-    ## 指定されたディレクトリにあるラベルが保存されているnpyファイルのパスを取得
-    label_path = sorted(glob.glob(path + "/*.npy"))
-    ## 順番にデータを取得し、データの使用目的に応じて保存する
-    test_label_listset = []
-    for each_path in label_path:
-        label = np.load(each_path)
-        if "train" in each_path:
-            train_label = label
-        elif "valid" in each_path:
-            valid_label = label
-        elif "test" in each_path:
-            test_label_listset.append(label)
-        else:
-            print("CAUTION: Cannot detect the label, the name of .npy file will be invalid.")
+    ## trainデータの予測ラベルの読み込み
+    train_path = glob.glob(path + "/train_*.npy")
+    train_label = np.load(train_path[0])
+
+    ## validデータの予測ラベルの読み込み
+    valid_path = glob.glob(path + "/valid_*.npy")
+    valid_label = np.load(valid_path[0])
+
+    ## 指定されたディレクトリにあるtestラベルのnpyファイルのパスを全て取得
+    test_path = glob.glob(path + "/test*.npy")
+    ## test1, test2, test3, ... の順にラベルを用意したい
+    ## そのために、test**の**の番号を基準にソートしたいので、文字列を切り出し**をint型に変換したリストを用意
+    testnumber_list = [int((i[len(path)+1:].split("_")[0]).split("test")[-1]) for i in test_path]
+    ## 上のリストを並び変えたときのインデックスのリストを取得
+    index_order_list = np.argsort(testnumber_list)
+    ## 順番にデータを取得し、リストに追加していく
+    test_label_listset = [np.load(test_path[i]) for i in index_order_list]
+
 
     return train_label, valid_label, test_label_listset
