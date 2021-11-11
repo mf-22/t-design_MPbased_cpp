@@ -199,6 +199,8 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list, np_seed):
         for j in range(Nu):
             ## 初期状態をHaar random stateにする
             state.set_Haar_random_state(haar_seed)
+            #state.set_Haar_random_state(1746904691)
+            #state.set_zero_state()
             ## ランダムクリフォードの実行
             circuit = ccg.get_element(gen_random_index(order))
             ccg.simulate_circuit(Nq, circuit, state)
