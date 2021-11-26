@@ -101,6 +101,15 @@ def sklearn_pca(repeat=False):
     else:
         ## ビット相関の数とモーメントの次数を入力し、データセットを読み込む
         train_data, train_info, valid_data, valid_info, test_dataset, test_infoset = data_loader.load_data("PCA", data_name, dt_index)
+        """
+        ## trainとvalidのデータを結合してランダムに分割する
+        temp_data = np.concatenate([train_data, valid_data], axis=0)
+        #temp_label = np.concatenate([train_label, valid_label], axis=0)
+        from sklearn.model_selection import train_test_split
+        seed = np.random.randint(2**31)
+        print("seed :", seed)
+        train_data, valid_data = train_test_split(temp_data, train_size=0.75, random_state=seed)
+        """
         ## draw_train_base関数を呼ぶときに引数で変数train_pred_labelを渡したり、ヒストグラムの
         ## 本数を決めるときにtrain_pred_labelの情報を使ったりするので、0で作っておく
         train_pred_label = np.zeros(train_data.shape[0], dtype=int)
@@ -115,7 +124,7 @@ def sklearn_pca(repeat=False):
 
     ## 特徴量ベクトルの寄与が大きい部分を出力したとき、その特徴量ベクトルのインデックスから
     ## その特徴量が何次のモーメントで何点ビット相関を計算したか求めるためのクラス
-    Searcher = ElementSearch.Element_Searcher(data_name, dir_path)
+    #Searcher = ElementSearch.Element_Searcher(data_name, dir_path)
     
     ## 第１,第２主成分を残し、射影後の分散が最大化するように次元を削減する
     pca = PCA(n_components=2)
@@ -270,7 +279,8 @@ def sklearn_pca(repeat=False):
                 if len(pred_1) != 0:
                     pred_1 = np.array(pred_1)
                     ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-test{}:pred1".format(test_num+1), marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-                p += data_size #ポインタを進める
+            
+            p += data_size #ポインタを進める
 
         ax.set_xlabel("PC1")
         ax.set_ylabel("PC2")
