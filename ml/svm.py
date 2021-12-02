@@ -10,10 +10,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 
 
-def sklearn_svm(ker="rbf"):
+def sklearn_svm(ker="rbf", shuffle=True):
     """ scikit-learnのライブラリを用いてsupport vector machineを実行する関数
-        Arg:
+        Args:
             ker(string) := カーネル関数(rbf, linear, poly, sigmoid)
+            shuffle := trainとvalidのデータをランダムに分割するかのbool型のフラグ(default=True)
     """
     ## pathの区切り文字("/"か"\")をOSに応じて取得
     SEP = os.sep
@@ -36,6 +37,16 @@ def sklearn_svm(ker="rbf"):
     ## データセットを読み込む
     train_data, train_label, valid_data, valid_label, test_dataset, test_labelset \
         = data_loader.load_data("SVM", data_name, dt_index)
+    
+    if shuffle:
+        ## 疑似乱数のシードを指定
+        seed = np.random.randint(2**31)
+        ## trainとvalidのデータを結合してランダムに分割する
+        num_train_data = train_data.shape[0]
+        temp_data = np.concatenate([train_data, valid_data], axis=0)
+        temp_label = np.concatenate([train_label, valid_label], axis=0)
+        from sklearn.model_selection import train_test_split
+        train_data, valid_data, train_label, valid_label = train_test_split(temp_data, temp_label, train_size=num_train_data, random_state=seed)
 
     ## 教師データのそれぞれの特徴量について、平均0分散1になるようにスケールする
     scaler = StandardScaler()
@@ -90,9 +101,11 @@ def sklearn_svm(ker="rbf"):
 
     ## パラメータなどの保存
     with open(dir_path+"paras.txt", mode="w") as f:
-        f.write("kernel : {}\n".format(ker))
+        f.write("kernel   : {}\n".format(ker))
         f.write("fit time : {}\n".format(finish-start))
-
+        f.write("shuffle  : {}\n".format(shuffle))
+        if shuffle:
+            f.write("seed     : {}\n".format(seed))
 
 if __name__ == "__main__":
     sklearn_svm()

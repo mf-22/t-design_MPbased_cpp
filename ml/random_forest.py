@@ -10,8 +10,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
 
-def sklearn_rf():
+def sklearn_rf(shuffle=True):
     """ sklearnに実装されているライブラリを用いてランダムフォレストを実行する関数
+        Arg:
+            shuffle := trainとvalidのデータをランダムに分割するかのbool型のフラグ(default=True)
     """
     ## pathの区切り文字("/"か"\")をOSに応じて取得
     SEP = os.sep
@@ -36,6 +38,14 @@ def sklearn_rf():
     ## データセットを読み込む
     train_data, train_label, valid_data, valid_label, test_dataset, test_labelset \
         = data_loader.load_data("RF", data_name, dt_index)
+    
+    if shuffle:
+        ## trainとvalidのデータを結合してランダムに分割する
+        num_train_data = train_data.shape[0]
+        temp_data = np.concatenate([train_data, valid_data], axis=0)
+        temp_label = np.concatenate([train_label, valid_label], axis=0)
+        from sklearn.model_selection import train_test_split
+        train_data, valid_data, train_label, valid_label = train_test_split(temp_data, temp_label, train_size=num_train_data, random_state=seed)
 
     ## 教師データのそれぞれの特徴量について、平均0分散1になるようにスケールする
     scaler = StandardScaler()
@@ -91,7 +101,8 @@ def sklearn_rf():
 
     ## パラメータなどの保存
     with open(dir_path+"paras.txt", mode="w") as f:
-        f.write("seed : {}\n".format(seed))
+        f.write("shuffle  : {}\n".format(shuffle))
+        f.write("seed     : {}\n".format(seed))
         f.write("fit time : {}\n".format(finish-start))
 
     ## 特徴量ベクトルの重要度を取得

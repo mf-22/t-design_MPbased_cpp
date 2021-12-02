@@ -23,14 +23,15 @@ def set_seed(my_seed):
     tf.random.set_seed(my_seed)
 
 
-def deep_learning(repeat=False):
+def deep_learning(repeat=False, shuffle=True):
     """ Deep Learningを行う関数。流れは以下：
           1.データ読み込み
           2.ハイパーパラメータ等の設定
           3.訓練、訓練課程の保存
           4.テストデータの評価、評価結果の保存
-        Arg:
-            repeat := グラフ等を表示するかのbool型のフラグ(default=False)
+        Args:
+            repeat  := グラフ等を表示するかのbool型のフラグ(default=False)
+            shuffle := trainとvalidのデータをランダムに分割するかのbool型のフラグ(default=True)
     """
     ## pathの区切り文字("/"か"\")をOSに応じて取得
     SEP = os.sep
@@ -56,6 +57,14 @@ def deep_learning(repeat=False):
     ## データセットを読み込む
     train_data, train_label, valid_data, valid_label, test_dataset, test_labelset \
         = data_loader.load_data("NN", data_name, dt_index)
+    
+    if shuffle:
+        ## trainとvalidのデータを結合してランダムに分割する
+        num_train_data = train_data.shape[0]
+        temp_data = np.concatenate([train_data, valid_data], axis=0)
+        temp_label = np.concatenate([train_label, valid_label], axis=0)
+        from sklearn.model_selection import train_test_split
+        train_data, valid_data, train_label, valid_label = train_test_split(temp_data, temp_label, train_size=num_train_data, random_state=seed)
 
     ## 教師データのそれぞれの特徴量について、平均0分散1になるようにスケールする
     scaler = StandardScaler()
@@ -181,6 +190,7 @@ def deep_learning(repeat=False):
     
     ## 機械学習時のパラメータの保存
     with open(dir_path+"train_parameters.txt", mode="w") as f:
+        f.write("shuffle        : {}\n".format(shuffle))
         f.write("seed           : {}\n".format(seed))
         f.write("optimizer      : {}\n".format(opt))
         f.write("learning rate  : {}\n".format(learning_rate))
@@ -242,4 +252,4 @@ def deep_learning(repeat=False):
 
 
 if __name__ == "__main__":
-    deep_learning()
+    deep_learning(repeat=True, shuffle=True)
