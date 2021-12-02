@@ -96,7 +96,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
           [3] : 特徴量ベクトルのデータサイズ(int)
     """
     data_list = []
-    ## ビット相関の特定の所だけを抜いくためにばしょを指定した配列を作成
+    ## ビット相関の特定の所だけを抜いくために場所を指定した配列を作成
     mom_num = len(kp_list)
     #specific_k_corr_point = np.ravel([specific_k_corr_point*i for i in range(1, mom_num+1)])
 

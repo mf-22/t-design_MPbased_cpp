@@ -124,7 +124,7 @@ def sklearn_pca(repeat=False):
 
     ## 特徴量ベクトルの寄与が大きい部分を出力したとき、その特徴量ベクトルのインデックスから
     ## その特徴量が何次のモーメントで何点ビット相関を計算したか求めるためのクラス
-    #Searcher = ElementSearch.Element_Searcher(data_name, dir_path)
+    Searcher = ElementSearch.Element_Searcher(data_name, dir_path)
     
     ## 第１,第２主成分を残し、射影後の分散が最大化するように次元を削減する
     pca = PCA(n_components=2)
