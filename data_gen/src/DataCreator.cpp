@@ -253,15 +253,28 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             //LRCの実行
             for(l=1;l<this->depth+1;++l) {
                 for(const auto& qubit_indecies : RU_index_list[l%2]) {
+                    for (const auto& qubit_index : qubit_indecies) {
+                        auto k1 = gate::DenseMatrix(qubit_index, kraus_identity);
+                        auto k2 = gate::DenseMatrix(qubit_index, kraus_measure_0);
+                        auto k3 = gate::DenseMatrix(qubit_index, kraus_measure_1);
+                        auto prob_measure = gate::CPTP({ k1, k2, k3 });
+                        prob_measure->update_quantum_state(&state);
+                        delete k1;
+                        delete k2;
+                        delete k3;
+                        delete prob_measure;
+                    }
                     auto local_haar_gate = gate::RandomUnitary(qubit_indecies);
                     local_haar_gate->update_quantum_state(&state);
                     delete local_haar_gate;
                 }
                 //LRCの最後の2層には測定を挿入しない
+                /*
                 if(l<this->depth-1){
                     //測定の適用
                     p_measure_circuit.update_quantum_state(&state);
                 }
+                */
             }
             /*
             //2層のLRCの追加
