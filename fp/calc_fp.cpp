@@ -338,9 +338,11 @@ int main() {
     //実行例
     /* パラメータの指定 */
     int ntimes = 10;
-    std::vector<int> Nq_list = { 10 };
-    std::vector<int> depth_list = { 8, 9,10,11,12 };
-    std::vector<int> t_list = { 3 };
+    std::vector<int> Nq_list = { 7 };
+    std::vector<int> depth_list = { 11,12,13,14,15 };
+    std::vector<int> t_list = { 2,3,4,5 };
+    double eps = 0.0001;
+    unsigned int pat = 5;
     /* 回路の指定 */
     std::string circ_type = "LRC";
     //std::string circ_type = "RDC";
@@ -353,7 +355,7 @@ int main() {
         for (int j = 0; j < Nq_list.size(); j++) {
             for (int k = 0; k < depth_list.size(); k++) {
                 //パラメータのセット
-                FP.set_paras(Nq_list[j], depth_list[k], t_list[i]);
+                FP.set_paras(Nq_list[j], depth_list[k], t_list[i], eps, pat);
                 std::cout << std::endl << "Now => Nq:" << Nq_list[j] << ", depth:" << depth_list[k] << ", t:" << t_list[i] << std::endl;
                 //ディレクトリ名
                 std::string dir_name = circ_type
