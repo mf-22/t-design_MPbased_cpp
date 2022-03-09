@@ -214,6 +214,7 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list, np_seed):
                 MP_list[j][k] = np.mean(bit_corr)
         ## モーメントの計算
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
+        #teacher_data[i] = np.array([np.abs(np.power(MP_list, m)).mean(axis=0) for m in range(1, 21)]).flatten()
         print("\r{} / {} finished...".format(i+1, S), end=(""))
     print("")
     

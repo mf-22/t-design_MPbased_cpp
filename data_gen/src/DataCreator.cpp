@@ -100,8 +100,8 @@ void DataCreator::_haar_sim() {
             QuantumState state(this->Nq);
             state.set_Haar_random_state();
             //測定と測定確率(ビット相関も)の計算
-            //sampling_result = state.sampling(this->Ns);
-            _state_measurement(state, sampling_result);
+            sampling_result = state.sampling(this->Ns);
+            //_state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -141,8 +141,8 @@ void DataCreator::_lrc_sim(
                 }    
             }
             //測定と測定確率(ビット相関も)の計算
-            //sampling_result = state.sampling(this->Ns);
-            _state_measurement(state, sampling_result);
+            sampling_result = state.sampling(this->Ns);
+            //_state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -192,8 +192,8 @@ void DataCreator::_lrc_depolarizing_sim(
                 depolarizing_circuit.update_quantum_state(&state);
             }
             //測定と測定確率(ビット相関も)の計算
-            //sampling_result = state.sampling(this->Ns);
-            _state_measurement(state, sampling_result);
+            sampling_result = state.sampling(this->Ns);
+            //_state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -221,7 +221,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
     ComplexMatrix dim2_matrix = Eigen::MatrixXd::Zero(2, 2);
     dim2_matrix(0, 0) = 1.0;
     dim2_matrix(1, 1) = 1.0;
-    ComplexMatrix kraus_identity = sqrt(1-this->noise_prob) * dim2_matrix;
+    ComplexMatrix kraus_identity = sqrt(1.0-this->noise_prob) * dim2_matrix;
     //0測定
     dim2_matrix(1, 1) = 0.0;
     ComplexMatrix kraus_measure_0 = sqrt(this->noise_prob) * dim2_matrix;
@@ -239,7 +239,7 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             })
         );
     }
-    
+
     //ループカウンタ
     int i,j,l;
     //教師データ作成
@@ -288,8 +288,8 @@ void DataCreator::_lrc_MeasurementInduced_sim(
             //量子状態の正規化
             state.normalize(state.get_squared_norm());
             //測定と測定確率(ビット相関も)の計算
-            //sampling_result = state.sampling(this->Ns);
-            _state_measurement(state, sampling_result);
+            sampling_result = state.sampling(this->Ns);
+            //_state_measurement(state, sampling_result);
             MP_list[j] = _calc_BitCorr_and_MP(sampling_result);
         }
         //測定確率のモーメントを計算
@@ -521,6 +521,7 @@ std::vector<float> DataCreator::_calc_moment_of_MP(std::vector<std::vector<float
         for(const auto& MP_eachU : MP_data) {
             for(int j=0;j<Nq_prime;++j) {
                 MP_mom_eachDim[j] += pow(MP_eachU[j], dim);
+                //MP_mom_eachDim[j] += fabs(pow(MP_eachU[j], dim));
             }
         }
         for(auto&& each_MP_mom : MP_mom_eachDim) {
