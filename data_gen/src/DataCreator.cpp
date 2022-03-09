@@ -354,7 +354,7 @@ void DataCreator::_run_preprocess() {
     this->depth = std::stoi(this->parameters["depth"]);
     //this->seed = std::stoi(this->parameters["seed"]);    
     this->noise_operator = std::stoi(this->parameters["noise_operator"]);
-    this->noise_prob = std::stof(this->parameters["noise_prob"]);
+    this->noise_prob = std::stod(this->parameters["noise_prob"]);
     
     //設定を出力
     std::cout << "** Parameters **" << std::endl;
