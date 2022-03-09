@@ -27,7 +27,7 @@ private:
     //ノイズの種類(0:なし, 1:Depolarizing, 2:Measurement)
     unsigned int noise_operator;
     //ノイズの割合(1-pでI、pでノイズ)
-    float noise_prob;
+    double noise_prob;
     //ビット相関を計算する際のインデックスのリスト
     std::vector<std::vector<int>> comb_list;
     //最終的に作成するデータ, 測定確率(ビット相関込み)が保存されるベクトル
