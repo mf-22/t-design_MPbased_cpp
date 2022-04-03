@@ -1,17 +1,42 @@
-# t-design_MPbased_cpp
-## 概要
+# Abstract
+A program for generating teacher data and machine learning to identify t-designs, and a program for estimating the design of a measure by calculating Frame Potential.
+It is written in C++ and Python, and the C++ compiler is assumed to be MSVC++ for Windows and GNU for Linux systems. On Python, it is assumed to be Anaconda3 for Windows, and vanilla Python for Linux.
+It has confirmed that it works on Windows-anaconda3 and Linux-pip3 in my environment. pip3 on Linux is python3.9 on pyenv.
+
+The programs for data generation and FP calculations rely heavily on [Qulacs](https://github.com/qulacs/qulacs).
+
+# How to run
+## Setup
+1. Run "setup_linux.sh" or "setup_win.bat" accroding to your environment
+2. Prepare your environment if needed("conda_requirements.txt" or "pip_requirements.txt")
+3. Install qulacs folloing [this](https://github.com/qulacs/qulacs#use-qualcs-as-c-library)(qulacs is already cloned if you run the setup file)
+## Run data generation program
+1. Change the directory to "t-design_MPbased_cpp/data_gen/main"
+2. Compile "main.cpp" and make exe file
+3. Rename the exe file "main" in Linux, "msvc_project.exe" in Windows
+4. Run "auto_create.py"
+5. Cut&Paste the created folder into "ml/datasets/"
+## Run machine learning program
+1. Change the directory to "t-design_MPbased_cpp/ml"
+2. Choose python code which you want to run
+## Run Frame Potential program
+1. Change the directory to "t-design_MPbased_cpp/fp"
+2. Run python code or complie C++ code and run it
+
+
+**More detail explanation is [below](https://github.com/mf-22/t-design_MPbased_cpp/edit/master/README.md#%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0%E3%81%AE%E5%AE%9F%E8%A1%8C%E6%96%B9%E6%B3%95) of this page(written in Japanese, so please translate).**
+
+# 概要
 t-designの識別のための教師データ生成と機械学習のプログラム、そして特定の量子ビット数・回路の深さのときのLocal Random Circuit, Random Diagonal Circuitが
 どれぐらいのdesignになっているか推定するためのFramePotentialの計算プログラムです。  
 C++とPythonで書かれており、C++のコンパイラはWindowsならMSVC++、Linux系ならGNUを想定しています。
 PythonのほうはWindowsならAnaconda Python、Linux系ではvanilaなpythonを想定しています。
 
-~~WindowsとLinuxで動くように作ったつもりですが、保証できません（データ生成は動くことを確認しましたが、機械学習・FPの方はまだ確認できていません）。~~  
 手元のWindows-anaconda3、Linux-pip3の環境で動くことを確認しました。Linuxのpip3はpyenv上のpython3.9です。
 
 データ生成、FPの計算のプログラムは[Qulacs](https://github.com/qulacs/qulacs)にかなり依存しています。
 
 ## Requirement
-~~pythonのpip3とanacondaのrequirements.txtは後で追加します。~~  
 Windows-Anacondaの場合はconda_requirements.txtを、Linux-pip3の場合はpip_requirements.txtを用いると環境構築ができます。  
 基本的に[Qulacsのrequirement](https://github.com/qulacs/qulacs#requirement)を満たしていれば大丈夫なはずです。  
 細かい部分は以下：  
@@ -39,25 +64,21 @@ Windowsの場合はトップにある`setup_win.bat`を、Linuxの場合は`setu
 そのときは[QualcsのCMakeLists.txt](https://github.com/qulacs/qulacs/blob/master/CMakeLists.txt)を編集しもう一度Qulacsをビルドしてください。Qulacsのビルド時にOMPをつけない
 ようなときも同様に編集してください。  
 その後はOSに応じて次の操作を行ってください：  
-### ~~Windows, Linux共通の変更~~
-~~色々データ生成するときに、保存するフォルダ名が被らないようにデータ出力するときの現在時刻を取得しファイル名にするようにしています（例: 2021年8月5日21時50分20秒=>20210805215020）。  
-この文字列を生成するコードをコンパイラに応じて変更する必要があります。`data_gen/include/t-design.util.hpp`の[getDatetimeStr関数](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/include/t-design_util.hpp#L161)と
-`fp/calc_fp.cpp`の[getDatetimeStr関数](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/fp/calc_fp.cpp#L84)内のコードを使用するコンパイラに応じてコメントアウトしてください。~~
 
 ### Windows環境の場合  
 - データ生成のプログラム（data_gen/auto_crate.py）の設定
   - Visual Studio等を使って`main.cpp`をコンパイルし実行ファイル(\*\*\*.exe)を作成してください。その後、できた実行ファイルを`data_gen/main/`にコピーし、
-  ファイル名を`msvc_project.exe`に変更するか`data_gen/main/auto_create.py`の[14行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L14)を
+  ファイル名を`msvc_project.exe`に変更するか`data_gen/main/auto_create.py`の[15行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L15)を
   ```
   exe_cpp = "***.exe" (実行ファイル名)
   ```
-  に変更してください。~~また、Pythonの環境に応じてその次の行のpythonの実行コマンドも修正してください。~~  
+  に変更してください。
   この[コミット](https://github.com/mf-22/t-design_MPbased_cpp/commit/c4c545a89c46cc6ea024cab2ec4723398c1aba02)からCliffordの実行が、subprocessによるプログラムの実行から
   関数呼び出しになったので修正は不要です。
 
 ### Linux環境の場合
 基本的にMakeFileのmakeコマンドを使ってビルドすると実行ファイル`main`が生成されます。そのmainファイルを実行すればOKです。もし`data_gen/main/main.cpp`の実行ファイル名が
-`main`以外の場合は`data_gen/main/auto_create.py`の[17行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L17)を
+`main`以外の場合は`data_gen/main/auto_create.py`の[18行目](https://github.com/mf-22/t-design_MPbased_cpp/blob/master/data_gen/main/auto_create.py#L18)を
 ```
 exe_cpp = "./(実行ファイル名)"
 ```
