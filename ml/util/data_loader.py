@@ -8,48 +8,47 @@ import random
 
 
 def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
-    """ datasetフォルダの中のフォルダを指定し、教師データを読み込んで返す関数。
-        元データはcsvファイルかnpyファイルで、最大のビット相関と20次までのモーメント
-        を計算している。ここから必要な部分を抜き出す。
-        PCAのときと機械学習アルゴリズムのときで戻り値が異なる：
-        ・PCA => 読み込んだデータのリスト
-        ・機械学習系 => 機械学習用に成型されたデータ
+    """ Function that reads and returns teacher data, given a folder in the dataset folder.
+        The original data is a csv or npy file, with the largest bit correlation and moments
+        up to the 20-th order calculated.
+        The returns of this function is different for PCA and for machine learning algorithms:
+            ・PCA => list of data read
+            ・Machine learning system => data molded for machine learning
         Arguments:
-            ml_alg(string)    := 機械学習アルゴリズムの名前の文字列(例: NN, svm, ...)
-            data_name(string) := データセットフォルダの文字列(例: dataset1)
-            dt_index(string)  := ファイル名の文字列(例: 20210728161623)
-            k(int)            := 計算するビット相関の数(default=0)。0なら後で標準入力
-            kp_list(list)     := 計算するモーメントの次数のリスト(default=[])。空なら後で標準入力
+            ml_alg(string)    := String of names of machine learning algorithms (e.g. NN, svm, ...)
+            data_name(string) := String for dataset folder (e.g. dataset1)
+            dt_index(string)  := File name string (e.g., 20210728161623)
+            k(int)            := Number of bit correlations to calculate (default=0); if 0, standard input later
+            kp_list(list)     := List of orders of the moment to be calculated (default=[]). If empty, standard input later.
         Returns:
             PCA:
-                train_data    := 訓練用のデータセット(2次元のndarray, データセット数×特徴量の次元)
-                train_info    := 結合してtrain_dataを作ったときの、結合する前のそれぞれのデータの、
-                                 種類とデータサイズのリストを要素に持つリスト
-                valid_data    := 検証用のデータセット(2次元のndarray, データセット数×特徴量の次元)
-                valid_info    := 結合してvalid_dataを作ったときの、結合する前のそれぞれのデータの、
-                                 種類とデータサイズのリストを要素に持つリスト
-                test_dataset  := テスト用のデータセットを要素に持つリスト(2次元のndarrayを要素に持つリスト)
-                test_infoset  := 結合する前のそれぞれのデータの種類とデータサイズのリストを要素に持つリストのリスト
+                train_data    := Dataset for training (2d ndarray, (number of datasets)*(dimension of features) )
+                train_info    := A list with elements listing the type and data size of each of the data
+                                 before merging when train_data is created by merging
+                valid_data    := Dataset for validation (2d ndarray, (number of datasets)*(dimension of features) )
+                valid_info    := A list with elements listing the type and data size of each piece of data before merging to create valid_data.
+                test_dataset  := List with test dataset as elements (list with 2-dimensional ndarray as elements)
+                test_infoset  := List of lists whose elements are a list of the type and data size of each of the data before merging
 
             Machine Learning:
-                train_data    := 訓練用のデータセット(2次元のndarray, データセット数×特徴量の次元)
+                train_data    := Dataset for training (2d ndarray, (number of datasets)*(dimension of features) )
                 train_label   := 訓練用のデータのラベル(1次元のndarrayで要素が0か1, 大きさがデータセット数)
-                valid_data    := 検証用のデータセット(2次元のndarray, データセット数×特徴量の次元)
+                valid_data    := Dataset for validation (2d ndarray, (number of datasets)*(dimension of features) )
                 valid_label   := 検証用のデータのラベル(1次元のndarrayで要素が0か1, 大きさがデータセット数)
-                test_dataset  := テスト用のデータセットを要素に持つリスト(2次元のndarrayを要素に持つリスト)
-                test_labelset := テスト用のデータのラベルを要素に持つリスト(1次元のndarrayを要素に持つリスト)
+                test_dataset  := List with test dataset as elements (list with 2-dimensional ndarray as elements)
+                test_labelset := List with labels of data for testing as elements (list with 1D ndarray as elements)
     """
-    ## pathの区切り文字("/"か"\")をOSに応じて取得
+    ##Get path delimiter ("/" or "\") depending on OS
     SEP = os.sep
 
-    ## 量子ビット数がいくつだったか取得
+    ##Get the number of qubits
     Nq = read_parameter.get_num_qubits(data_name)
     
-    ## ビット相関を計算したとき、考えられる最大の組み合わせの数を計算
+    ##Calculate the maximum number of possible combinations when bit correlations are calculated
     Nq_prime = 2 ** Nq - 1
 
-    ## データセットの中のパスを探索する
-    ## "train"フォルダーを検索する
+    ##Explore paths in the dataset
+    ##Search the "train" folder
     dataset_path = glob.glob('datasets/{}/train/*_*.npy'.format(data_name))
     dataset_path.extend(glob.glob('datasets/{}/train/*_*.csv'.format(data_name)))
     ##search in "valid" folder
@@ -59,19 +58,19 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
     dataset_path.extend(glob.glob('datasets/{}/test/**/*_*.npy'.format(data_name), recursive=True))
     dataset_path.extend(glob.glob('datasets/{}/test/**/*_*.csv'.format(data_name), recursive=True))
 
-    ## globによって得られるリストの順序がOSに依存しているので、ソートして同じになるようにしておく
+    ##The order of the lists obtained by "glob" depends on the OS, so sort them to make sure they are the same.
     dataset_path.sort()
-    ## テストデータセットの数を取得
+    ##get the number of test datasets
     testset_num = len(glob.glob('datasets/{}/test/*'.format(data_name)))
     
-    ## 探索してきたパスの出力
+    ##Output of the paths that have been explored
     print("Extracted path:")
     print(np.array(dataset_path))
     print("num_testset =", testset_num)
 
-    ## 抽出するビット相関数kとモーメントの次数k'を入力
+    ##Input the number of bit correlations "k" to be extracted and the order of moments "k'".
     if k == 0:
-        ## ビット相関の数を選択して抽出するのは未実装、必要になったら
+        ##Selecting and extracting the number of bit correlations is not yet implemented, if needed.
         #print('input k(Max={}) :'.format(Nq), end=(' '))
         #k = int(input())
         k = Nq
@@ -89,23 +88,23 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         kp_list = [i for i in range(kp_min, kp_max+1, kp_step)]
     print("Dim of moment =", kp_list)
     
-    """ 抽出してきたデータを保持しておくリスト。要素数4のリストを要素に持つ
-          [0] : データの種類(haar, clif, lrc, ...)
-          [1] : データの使用目的(train, valid, test1, ...)
-          [2] : 特徴量ベクトル(データサイズ×特徴量の2次元ndarray)
-          [3] : 特徴量ベクトルのデータサイズ(int)
+    """ A list that holds the data that has been extracted. The list has 4 elements with the number of elements:
+          [0] : type of data (haar, clif, lrc, ...)
+          [1] : purpose of data (train, valid, test1, ...)
+          [2] : feature vector ( (data size)*(2d ndarray of features) )
+          [3] : data size of feature vector (int)
     """
     data_list = []
-    ## ビット相関の特定の所だけを抜いくために場所を指定した配列を作成
+    ##Create a location-specific array to extract only specific parts of the bit correlations
     mom_num = len(kp_list)
     #specific_k_corr_point = np.ravel([specific_k_corr_point*i for i in range(1, mom_num+1)])
 
-    ## 順番に抽出していく
+    ##Extraction in order
     for data_path in dataset_path:
-        ## 今操作しているデータが何か出力
+        ##Output what data is currently being manipulated
         print("\rNow => {}   ".format(data_path), end="")
 
-        ## データの種類を特定(haar, clif, ...)
+        ##Identify data type (haar, clif, ...)
         if "haar" in data_path:
             data_type = "haar"
         elif "clif" in data_path:
@@ -115,7 +114,7 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         elif "rdc" in data_path:
             data_type = "rdc"
         
-        ## データの使用目的を特定(train, valid, ...)
+        ##Identify the intended use of the data (train, valid, ...)
         if "train" in data_path:
             purpose = "train"
         elif "valid" in data_path:
@@ -129,55 +128,55 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
                 else:
                     count += 1
         
-        ## ファイルを形式に応じて読み込む
+        ##Read files according to format
         if "npy" in data_path:
-            ## npyファイルなら普通に読み込み、単精度で
+            ##If it is an npy file, it reads normally and with single precision
             data = np.load(data_path).astype(np.float32)
         elif "csv" in data_path:
-            ## csvファイルの場合は区切り文字をカンマで読み込む
+            ##For csv files, read the delimiter character with a comma.
             data = np.loadtxt(data_path, delimiter=",").astype(np.float32)
-            ## csvファイルをnpy形式(バイナリ)に置き換えてしまう
-            ## 機械学習し直すときにnpyの方が読み込みが早くファイルサイズも小さいので
+            ##Replace csv files with npy(binary) format
+            ##When repeating machine learning, npy is faster to load and the file, and filesize is smaller
             np.save(data_path.split(".csv")[0], data)
             os.remove(data_path)
             
-        ## 必要な部分を抽出する
+        ##Extract the necessary parts
         data = np.concatenate(
             [data[:, Nq_prime*(i-1):(Nq_prime*(i-1))+Nq_prime] for i in kp_list],
             axis=1
         )
 
-        ## ビット相関の特定の所だけを抜いてくる
-        #data = data[:, specific_k_corr_point] #ファンシーインデックス
+        ##only pull out certain parts of the bit correlation
+        #data = data[:, specific_k_corr_point] #fancy index
 
-        ## リストに追加
+        ##add to list
         #print(data_type, purpose, data.shape[0])
         data_list.append([data_type, purpose, data, data.shape[0]])
     print("\r" + " "*(len(dataset_path[-1])+12) + "\n")
  
-    ## 抽出したパラメータを保存
+    ##Save extracted parameters
     with open("datasets/{}/{}/{}/extract_parameters.txt".format(data_name, ml_alg, dt_index), mode="w") as f:
         f.write('k : {}\nk` : {}\n'.format(k, kp_list))
     
-    ## 訓練用のデータを作る。データのリストから目的がtrainであるデータを抜き出して結合する
+    ##Create data for training. Extract and combine data whose purpose is "train" from the list of data.
     train_data = np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "train"], axis=0)
-    ## 検証用のデータを作る。データのリストから目的がtrainであるデータを抜き出して結合する
+    ##Create data for validiation. Extract and combine data whose purpose is "valid" from the list of data.
     valid_data = np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "valid"], axis=0)
-    ## テスト用のデータを作る。テストデータは複数与えたいことがあるので、データセットを要素に持つリストで作成する
+    ##Create data for testing. Since we want to give more than one set of test data, create them in a list with data sets as elements.
     test_dataset = []
     for i in range(1, testset_num+1):
-        ## 検証用のデータを作る、データのリストから目的がtrainであるデータを抜き出して結合する
+        ##Create data for testing. Extract and combine data whose purpose is "test*" from the list of data.
         test_dataset.append(np.concatenate([temp_list[2] for temp_list in data_list if temp_list[1] == "test{}".format(i)], axis=0))
         
     if ml_alg == "PCA":
-        """ PCAのときは、ラベルは"無し"か"機械学習アルゴリズムが予測した結果"を使うのでここではラベルは作らない
-            そのかわり、それぞれのデータの種類とデータサイズを保持するリストを作成し返す
+        """ In the case of PCA, labels are either "none" or "predicted by machine learning algorithm", so labels are not created here.
+            Instead, create and return a list that holds each data type and data size
         """
-        ## 訓練データを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
+        ##For each piece of data that makes up the training data, create a list that holds the type and data size of that data.
         train_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "train"]
-        ## 検証データを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
+        ##For each piece of data that makes up the validation data, create a list that holds the type and data size of that data.
         valid_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "valid"]
-        ## テストデータを構成するそれぞれのデータについて、そのデータの種類とデータサイズを保持するリストを作る
+        ##For each piece of data that makes up the test data, create a list that holds the type and data size of that data.
         test_infoset = []
         for i in range(1, testset_num+1):
             temp_info = [[temp_list[0], temp_list[3]] for temp_list in data_list if temp_list[1] == "test{}".format(i)]
@@ -186,22 +185,22 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
         return train_data, train_info, valid_data, valid_info, test_dataset, test_infoset
 
     else:
-        """ 機械学習を行う場合はラベルを作成し返す
+        """ Create and return labels for machine learning
         """
-        ## 訓練用のデータのラベルを作る。データのリストから目的がtrainであるデータを抜き出し、ラベルを生成した後結合する
+        ##Create labels for training data. Extract data whose purpose is TRAIN from the list of data, generate labels, and combine them.
         train_label = np.concatenate(
             [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "train" ],
             axis=0
         )
-        ## 検証用のデータのラベルを作る。データのリストから目的がvalidであるデータを抜き出し、ラベルを生成した後結合する
+        ##Create labels for validiation data. Extract data whose purpose is valid from the list of data, generate labels, and combine them.
         valid_label = np.concatenate(
             [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "valid" ],
             axis=0
         )
-        ## テスト用のデータのラベルを作る。テストデータは複数与えたいことがあるので、データセットを要素に持つリストで作成する
+        ##Create labels for the test data. Since we want to give more than one set of test data, create them in a list with the data set as an element.
         test_labelset = []
         for i in range(1, testset_num+1):
-            ## 検証用のデータを作る、データのリストから目的がtrainであるデータを抜き出して結合する
+            ## Create data for testing, extract and combine data whose purpose is "test*" from a list of data.
             temp_label = np.concatenate(
                 [ label_generator.generate_label(temp_list[0], temp_list[3]) for temp_list in data_list if temp_list[1] == "test{}".format(i) ],
                 axis=0
@@ -212,31 +211,31 @@ def load_data(ml_alg, data_name, dt_index, k=0, kp_list=[]):
 
 
 def load_pred_labels(path):
-    """ PCAの出力で、識別器の出力(予測ラベル)の情報も合わせてプロットしたい。
-        そのときに保存されている予測ラベルを読み込み、含まれるデータの情報と合わせて返す関数。
+    """ Would like to plot the output of PCA with information on the trained model's output(predictive labels).
+        This function that reads the saved predictive labels and returns them along with the information of the included data.
         Arg:
-            path(string) := 予測ラベルが保存されているディレクトリのパス
+            path(string) := Path of the directory where the predictive labels are stored
         Returns:
-            train_label(ndarray) := 訓練データの予測ラベル
-            valid_label(ndarray) := 検証データの予測ラベル
-            test_labelset(list of ndarray) := テストデータの予測ラベルを要素に持つリスト
+            train_label(ndarray) := Prediction labels for training data
+            valid_label(ndarray) := Prediction labels for validation data
+            test_labelset(list of ndarray) := List with predictive labels for test data as elements
     """
-    ## trainデータの予測ラベルの読み込み
+    ##Reading predictive labels for train data
     train_path = glob.glob(path + "/train_*.npy")
     train_label = np.load(train_path[0])
 
-    ## validデータの予測ラベルの読み込み
+    ##Reading predictive labels for valid data
     valid_path = glob.glob(path + "/valid_*.npy")
     valid_label = np.load(valid_path[0])
 
-    ## 指定されたディレクトリにあるtestラベルのnpyファイルのパスを全て取得
+    ##Get all paths to npy files labeled test in the specified directory
     test_path = glob.glob(path + "/test*.npy")
-    ## test1, test2, test3, ... の順にラベルを用意したい
-    ## そのために、test**の**の番号を基準にソートしたいので、文字列を切り出し**をint型に変換したリストを用意
+    ##want to prepare labes in the orders of test1, test2, test3, ... .
+    ##To do this, we want to sort by the number of ** in test**, so we cut out the string and convert the ** to an int type list.
     testnumber_list = [int((i[len(path)+1:].split("_")[0]).split("test")[-1]) for i in test_path]
-    ## 上のリストを並び変えたときのインデックスのリストを取得
+    ##Get the list of indices when the above list is reordered
     index_order_list = np.argsort(testnumber_list)
-    ## 順番にデータを取得し、リストに追加していく
+    ##Get data in order and add to the list.
     test_label_listset = [np.load(test_path[i]) for i in index_order_list]
 
 

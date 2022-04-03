@@ -13,72 +13,72 @@ import matplotlib.pyplot as plt
 
 
 def draw_train_base(label_exist, axes, train_info, train_data, train_label):
-    """ 訓練データのプロットの上に検証データやテストデータのプロットを重ねたい。
-        そのときの、訓練データのプロットを行う関数
+    """ We want to overlay a plot of validation or test data on top of a plot of training data.
+        This function plots the training data in that case. 
         Args:
-            label_exist(int)             := ラベルを用いてプロットするかどうか、0ならしない
-            axes(matloptlibのaxesクラス) := 空のグラフ
-            train_info(list)             := データの種類と、その教師データのデータ数を覚えておくためのリスト
-            train_data(ndarray)          := 訓練データの主成分ベクトル
-            train_label(ndarray)         := 訓練データの予測ラベル(default=0)
+            label_exist(int)                  := Whether to plot with labels or not, 0 for not
+            axes(class of axes of matplotlib) := empty axes object
+            train_info(list)                  := List to remember the type of data and the number of data for that teacher data
+            train_data(ndarray)               := Principal component vector of training data
+            train_label(ndarray)              := Prediction labels for training data(default=0)
     """
-    p = 0 #リストの位置を示すポインタ
+    p = 0 #Pointer to list position
     for data_type, data_size in train_info:
         if data_type == "haar":
-            color = "blue" #Haar-trainを青
+            color = "blue" #set Haar-train as blue
         elif data_type == "clif":
-            color = "red" #クリフォード系-trainを赤
+            color = "red" #set Clif-train as red
         else:
-            color = "black" #他はひとまず黒にしておく
+            color = "black" #set others as black
         
         if label_exist == 0:
             axes.scatter(train_data[p:p+data_size,0], train_data[p:p+data_size,1], label=data_type+"-train", marker='o', alpha=0.5, s=15, c=color)
         else:
-            ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
+            ##Extract labels from one of the combined teacher data
             partial_label = train_label[p:p+data_size]
-            ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
+            ##List of feature vectors to save vectors predicted to be 0(haar) or 1(clif), respectively
             pred_0, pred_1 = [], []
-            ## リスト内包表記でそれぞれのリストに分ける
+            ##Separate each list with list comprehension notation
             [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(train_data[p:p+data_size])]
-            ## 散布図として描き込む
+            ##Draw in as a scatter plot
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
                 axes.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
                 axes.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-        ## ヒストグラムを描く
-        p += data_size #ポインタを進める
+        ##Draw a histogram
+        p += data_size #advance a pointer
 
 
-def sklearn_pca(repeat=False):
-    """ scikit-learnのライブラリを利用して主成分分析を行う関数
+def sklearn_pca(repeat=True):
+    """ Function to perform principle component analysis using scikit-learn library.
         Arg:
-            repeat := グラフ等を表示するかのbool型のフラグ(default=False)
+            repeat := bool type flag to display graphs, etc. (default=False)
     """
-    ## pathの区切り文字("/"か"\")をOSに応じて取得
+    ##Get path delimiter ("/" or "\") depending on OS
     SEP = os.sep
 
-    ## 現在の時刻を文字列で取得 (例)2021年7月28日18時40分39秒 => 20210728184039
+    ##Get the current time as a string (e.g.) July 28, 2021 18:40:39 => 20210728184039
     dt_now = datetime.datetime.now()
     dt_index = dt_now.strftime("%Y%m%d%H%M%S")
 
-    ## ファイル名の入力
+    ##input the filename
     print("input dataset : ", end=(""))
     data_name = input()
     if not os.path.isdir("datasets" + SEP + data_name):
         print('ERROR: Cannnot find the dataset "{}"'.format(data_name))
         return -1
-    ## PCAの結果を保存するディレクトリのパスを作成
-    ## (例: datasets/dataset1/PCA/20210729123234/)
+    ##make a directory path to save PCA results
+    ##(e.g. datasets/dataset1/PCA/20210729123234/)
     dir_path = "datasets" + SEP + data_name + SEP + "PCA" + SEP + dt_index + SEP
-    ## 結果を保存するディレクトリを作成
+    ##Create a directory to store the results
     os.makedirs(dir_path)
 
-    ## 機械学習アルゴリズムの実行により得られる予測ラベルが保存されているフォルダを探索
+    ##Search for folders where predictive labels obtained by running machine learning algorithms are saved
     label_path = sorted(glob.glob("datasets/"+data_name+"/**/predicted_labels", recursive=True))
 
-    ## プロットの際に用いる予測済みのラベルとしてどれを使うか選択する
+    ##Select which of the predicted labels to use when plotting
     if len(label_path) == 0:
         print("\nPredicted labels were not found.")
         label_choice = 0
@@ -90,19 +90,20 @@ def sklearn_pca(repeat=False):
         print("\nlabel_choice : ", end="")
         label_choice = int(input())
 
-    ## 予測のラベルを使うとき
+    ##When using labels for predictions
     if label_choice != 0:
-        ## 機械学習を行い予測したときのビット相関の数とモーメントの次数を取得し、そのパラメータで教師データを再生成する
+        ##Obtain the number of bit correlations and the order of the moments when machine learning is performed
+        ##and predictions are made, and regenerate the teacher data with these parameters.
         k, kp_list = read_parameter.get_birCorr_moment(label_path[label_choice-1].split("predicted_labels")[0])
         train_data, train_info, valid_data, valid_info, test_dataset, test_infoset = data_loader.load_data("PCA", data_name, dt_index, k, kp_list)
-        ## 予測済みのラベルの読み込み
+        ##Loading Predicted Labels
         train_pred_label, valid_pred_label, test_pred_labelset = data_loader.load_pred_labels(label_path[label_choice-1])
-    ## ラベルの情報は無しでPCAするとき
+    ##When PCA is performed without label information
     else:
-        ## ビット相関の数とモーメントの次数を入力し、データセットを読み込む
+        ##Input the number of bit correlations and the order of the moments to read the dataset
         train_data, train_info, valid_data, valid_info, test_dataset, test_infoset = data_loader.load_data("PCA", data_name, dt_index)
         """
-        ## trainとvalidのデータを結合してランダムに分割する
+        ##Combine training and validation data and divide randomly
         temp_data = np.concatenate([train_data, valid_data], axis=0)
         #temp_label = np.concatenate([train_label, valid_label], axis=0)
         from sklearn.model_selection import train_test_split
@@ -110,78 +111,79 @@ def sklearn_pca(repeat=False):
         print("seed :", seed)
         train_data, valid_data = train_test_split(temp_data, train_size=0.75, random_state=seed)
         """
-        ## draw_train_base関数を呼ぶときに引数で変数train_pred_labelを渡したり、ヒストグラムの
-        ## 本数を決めるときにtrain_pred_labelの情報を使ったりするので、0で作っておく
+        ##When calling "draw_train_base()", the variable "train_pred_label" is passed as an argument,
+        ##and the information in "train_pred_label" is used to determine the number of histograms, so make it 0.
         train_pred_label = np.zeros(train_data.shape[0], dtype=int)
 
-    ## 教師データのそれぞれの特徴量について、平均0分散1になるようにスケールする
+    ##Scale to the mean become 0, the variance become 1 for each feature in the teacher data
     scaler = StandardScaler()
-    ## trainデータを用いてシフトと拡縮の割合を計算し変換
+    ##Calculate shift and scaling ratios using train data and transform
     train_data = scaler.fit_transform(train_data)
-    ## validとtestは計算済みのシフト・拡縮幅で変換
+    ##validation and test data are transformed with calculated shift and scaling ratios from training dataset
     valid_data = scaler.transform(valid_data)
     test_dataset = [scaler.transform(test_data) for test_data in test_dataset]
 
-    ## 特徴量ベクトルの寄与が大きい部分を出力したとき、その特徴量ベクトルのインデックスから
-    ## その特徴量が何次のモーメントで何点ビット相関を計算したか求めるためのクラス
+    ##Class for finding out how many point bit correlations were computed at what order of moments for a feature
+    ##from the index of the feature vector when the part of the feature vector with the largest contribution is output.
     Searcher = ElementSearch.Element_Searcher(data_name, dir_path)
     
-    ## 第１,第２主成分を残し、射影後の分散が最大化するように次元を削減する
-    pca = PCA(n_components=2)
+    ##Reduce the dimensionality to be the variance after projection max, and holds the first and second principal components
+    pca = PCA(n_components=2, svd_solver="full")
 
-    ## 訓練の開始
+    ##start PCA
     print("\r" + "fitting...", end="")
     start = time.perf_counter()
     pca.fit(train_data)
     finish = time.perf_counter()
 
-    ## 訓練にかかった時間を出力
+    ##Output time spent on fitting
     print("\r" + "fit time : {}[s]".format(finish-start))
 
-    ## それぞれのデータに対してPCAを行う
+    ##Perform PCA on each of the data
     train_reduc = pca.transform(train_data)
     valid_reduc = pca.transform(valid_data)
     testset_reduc = [pca.transform(test_data) for test_data in test_dataset]
 
-    """ 第1主成分(横軸)と第2主成分(縦軸)で訓練データの散布図を描く
-        上の図は散布図で、下の図は第1主成分の密度をヒストグラムで表現する
+    """Draw a scatter plot of the training data with the first principal component(horizontal axis)
+       and the second principal component(vertical axis). The above figure is a scatterplot and the
+       below figure is a histogram of the density of the first principal component.
     """
-    fig = plt.figure() #図の作成
-    ax1 = fig.add_subplot(2,1,1) #上側の主成分のプロット
-    ax2 = fig.add_subplot(2,1,2) #下側の第1主成分の密度のヒストグラム
-    hist_bins = train_pred_label.shape[0] // 20 #ヒストグラムの棒の数
-    ## 結合して作成していた訓練データを、1つずつ順番にプロットしていく
-    p = 0 #リストの位置を示すポインタ
+    fig = plt.figure() #making figure
+    ax1 = fig.add_subplot(2,1,1) #Plot principal components onto the above part in the fig
+    ax2 = fig.add_subplot(2,1,2) #plot histogram of the density onto the below part in the fig
+    hist_bins = train_pred_label.shape[0] // 20 #the number of bar of histgram
+    ##Plot the training data, which had been created by combining them, one at a time in sequence.
+    p = 0 #Pointer to list position
     for data_type, data_size in train_info:
         if data_type == "haar":
-            color = "blue" #Haar-trainを青
+            color = "blue" #set Haar-train as blue
         elif data_type == "clif":
-            color = "red" #クリフォード系-trainを赤
+            color = "red" #set clif-train as red
         else:
-            color = "black" #他はひとまず黒にしておく
+            color = "black" #set others as black
         
         if label_choice == 0:
-            ## 予測ラベルなしのときは色分けあり、記号○でプロット
+            ##Plot with color coding and symbol "o" when there is no prediction label
             ax1.scatter(train_reduc[p:p+data_size, 0], train_reduc[p:p+data_size, 1], label=data_type+"-train", marker='o', alpha=0.5, s=15, c=color)
         
         else:
-            ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
+            ##Extract labels from one of the combined teacher data
             partial_label = train_pred_label[p:p+data_size]
-            ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
+            ##List of feature vectors to save vectors predicted to be 0(haar) or 1(clif), respectively
             pred_0, pred_1 = [], []
-            ## リスト内包表記でそれぞれのリストに分ける
+            ##Separate each list by list comprehension notation
             [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(train_reduc[p:p+data_size])]
-            ## 散布図として描き込む
+            ##Draw in as a scatter plot
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
-                ax1.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                ax1.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-train:pred0", marker='o', alpha=0.5, s=15, c=color) #Data predicted to be 0 are plotted with a circle
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
-                ax1.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-        ## ヒストグラムを描く
+                ax1.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-train:pred1", marker='*', alpha=0.5, s=15, c=color) #Data predicted to be 1 are plotted with a star
+        ##Draw a histogram
         ax2.hist(train_reduc[p:p+data_size, 0], label=data_type, bins=hist_bins, density=True, alpha=0.8, color=color)
-        p += data_size #ポインタを進める
-    ## 2つのグラフの各軸の名前やタイトル、グリッド線や凡例を表示させる
+        p += data_size #advance a pointer
+    ##Display the name and title of each axis of the two graphs, as well as grid lines and legends
     ax1.set_xlabel("PC1")
     ax1.set_ylabel("PC2")
     ax1.set_title("A plot of training data")    
@@ -197,40 +199,40 @@ def sklearn_pca(repeat=False):
     if not repeat:
         plt.show()
     
-    """ 訓練データと検証データをプロットする。
+    """ Plot the training and validation data
     """
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     draw_train_base(label_choice, ax, train_info, train_reduc, train_pred_label)
-    ## 結合して作成していた検証データを、1つずつ順番にプロットしていく
-    p = 0 #リストの位置を示すポインタ
+    ##Plot the training data, which had been created by combining them, one at a time in sequence.
+    p = 0 #Pointer to list position
     for data_type, data_size in valid_info:
         if data_type == "haar":
-            color = "yellow" #Haar-validを黄
+            color = "yellow" #set Haar-valid as yellow
         elif data_type == "clif":
-            color = "green" #クリフォード系-validを緑
+            color = "green" #set clif-valid as green
         else:
-            color = "black" #他はひとまず黒にしておく
+            color = "black" ##set others as blue
         
         if label_choice == 0:
-            ## 予測ラベルなしのときは色分けあり、記号○でプロット
+            ##Plot with color coding and symbol "o" when there is no prediction label
             ax.scatter(valid_reduc[p:p+data_size, 0], valid_reduc[p:p+data_size, 1], label=data_type+"-valid", marker='o', alpha=0.5, s=15, c=color)
         
         else:
-            ## 結合して作成した教師データのうちの、1つのデータのラベルを抜き出す
+            ##Extract labels from one of the combined teacher data
             partial_label = valid_pred_label[p:p+data_size]
-            ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
+            ##List of feature vectors to save vectors predicted to be 0(haar) or 1(clif), respectively
             pred_0, pred_1 = [], []
-            ## リスト内包表記でそれぞれのリストに分ける
+            ##Separate each list by list comprehension notation
             [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i,val in enumerate(valid_reduc[p:p+data_size])]
-            ## 散布図として描き込む
+            ##Draw in as a scatter plot
             if len(pred_0) != 0:
                 pred_0 = np.array(pred_0)
-                ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-valid:pred0", marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-valid:pred0", marker='o', alpha=0.5, s=15, c=color) #Data predicted to be 0 are plotted with a circle
             if len(pred_1) != 0:
                 pred_1 = np.array(pred_1)
-                ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-valid:pred1", marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
-        p += data_size #ポインタを進める
+                ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-valid:pred1", marker='*', alpha=0.5, s=15, c=color) #Data predicted to be 1 are plotted with a star
+        p += data_size #advance a pointer
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
     ax.set_title("A plot of training and validiation data")    
@@ -241,46 +243,46 @@ def sklearn_pca(repeat=False):
     if not repeat:
         plt.show()
 
-    """ 訓練データとテストデータでプロットする。
+    """ Plot the training and test data
     """
     for test_num, each_test_info in enumerate(test_infoset):
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1)
         draw_train_base(label_choice, ax, train_info, train_reduc, train_pred_label)
-        ## 結合して作成していたテストデータを、1つずつ順番にプロットしていく
-        p = 0 #リストの位置を示すポインタ
+        ##Plot the training data, which had been created by combining them, one at a time in sequence.
+        p = 0 #Pointer to list position
         for data_type, data_size in each_test_info:
-            ## グラフの色を決める。Haar以外は緑にしているので、もしテストデータセット内に含まれるなら変更する。
+            ##Decide the color of the graph, except for Haar, which is green and should be changed if it is included in the test data set.
             if data_type == "haar":
-                color = "yellow" #Haar-testを黄
+                color = "yellow" #set Haar-test as yellow
             elif data_type == "clif":
-                color = "green" #クリフォード系-testを緑
+                color = "green" #set clif-test as green
             elif data_type == "lrc":
-                color = "green" #lrc-testも緑
+                color = "green" #set lrc-test as green
             elif data_type == "rdc":
-                color = "green" #rdc-testも緑
+                color = "green" #set rdc-test as green
 
             if label_choice == 0:
-                ## 予測ラベルなしのときは色分けあり、記号○でプロット
+                ##Plot with color coding and symbol "o" when there is no prediction label
                 ax.scatter(testset_reduc[test_num][p:p+data_size, 0], testset_reduc[test_num][p:p+data_size, 1], label=data_type+"-test{}".format(test_num+1), marker='o', alpha=0.5, s=15, c=color)
             
             else:
-                ## テストデータやラベルをリストにしていたものから対象のものを選択し、範囲を選んでデータを抜き出す
+                ##Select the target from a list of test data and labels, and then select a range to extract the data
                 partial_data = testset_reduc[test_num][p:p+data_size]
                 partial_label = test_pred_labelset[test_num][p:p+data_size]
-                ## 特徴量ベクトルのうち、0(Haar)または1(clif)と予測されたベクトルをそれぞれ保存するリスト
+                ##List of feature vectors to save vectors predicted to be 0(haar) or 1(clif), respectively
                 pred_0, pred_1 = [], []
-                ## リスト内包表記でそれぞれのリストに分ける
+                ##Separate each list by list comprehension notation
                 [pred_0.append(val) if partial_label[i] == 0 else pred_1.append(val) for i, val in enumerate(partial_data)]
-                ## 散布図として描き込む
+                ##Draw in as a scatter plot
                 if len(pred_0) != 0:
                     pred_0 = np.array(pred_0)
-                    ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-test{}:pred0".format(test_num+1), marker='o', alpha=0.5, s=15, c=color) #0と予測されたデータは○でプロット
+                    ax.scatter(pred_0[:,0], pred_0[:,1], label=data_type+"-test{}:pred0".format(test_num+1), marker='o', alpha=0.5, s=15, c=color) #Data predicted to be 0 are plotted with a circle
                 if len(pred_1) != 0:
                     pred_1 = np.array(pred_1)
-                    ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-test{}:pred1".format(test_num+1), marker='*', alpha=0.5, s=15, c=color) #1と予測されたデータは☆でプロット
+                    ax.scatter(pred_1[:,0], pred_1[:,1], label=data_type+"-test{}:pred1".format(test_num+1), marker='*', alpha=0.5, s=15, c=color) #Data predicted to be 1 are plotted with a star
             
-            p += data_size #ポインタを進める
+            p += data_size #advance a pointer
 
         ax.set_xlabel("PC1")
         ax.set_ylabel("PC2")
@@ -292,7 +294,7 @@ def sklearn_pca(repeat=False):
         if not repeat:
             plt.show()
 
-    ## パラメータなどの保存
+    ##Save parameters, etc.
     with open(dir_path+"paras.txt", mode="w") as f:
         if label_choice == 0:
             f.write("used label : None\n")
@@ -300,13 +302,13 @@ def sklearn_pca(repeat=False):
             f.write("used label : {}\n".format((label_path[label_choice-1].split(data_name+SEP)[-1]).split(SEP+"predicted_labels")[0]))
 
 
-    ## 特徴量ベクトルの重要度を取得
+    ##Get the importance of feature vectors
     importances = pca.components_
-    ## 重要度が高い順(降順)に並び替え、そのときのindexのリストを取得
+    ##Sort by importance(descending order) and get the list of indices at that time
     indices = np.argsort(-importances)
     
-    ## インデックスと係数(重要度)を送りcsvファイルに保存する
-    ## インデックスの順で保存されるのでソートして置いたほうが見やすい
+    ##Save index and coefficients(importance) to csv file
+    ##Saved in the order of the index, so it is easier to see if they are sorted.
     Searcher.search_and_save_all(indices[0], importances[0], filename="components_PC1")
     Searcher.search_and_save_all(indices[1], importances[1], filename="components_PC2")
 

@@ -15,26 +15,26 @@
 #include <cmath>
 
 ComplexMatrix my_tensor_product(ComplexMatrix A, ComplexMatrix B) {
-    /** テンソル積(クロネッカー積、np.kron(A,B))を計算する関数
+    /** Function to compute the tensor product (Kronecker product, np.kron(A,B))
      *   Args:
-     *       A,B(ComplexMatrix) := 複素行列
+     *       A,B(ComplexMatrix) := Complex matrices
      *   Return:
-     *       A tensor B (np.kron(A,B)) := AとBのテンソル積の計算結果の行列
+     *       A tensor B (np.kron(A,B)) := Matrix of the result of the tensor product of A and B
      */
-    // AとBの行列の次元を取得
+    //Get the dimension of A and B matrices
     unsigned long long int mat_A_dim = A.rows();
     unsigned long long int mat_B_dim = B.rows();
-    // 計算結果を保存する行列を宣言
+    //Declare a matrix to save the calculation results
     ComplexMatrix C(mat_A_dim*mat_B_dim, mat_A_dim*mat_B_dim);
-    // 行列の一部のブロックを表現する行列を宣言
+    //Declare a matrix that represents some blocks of the matrix
     ComplexMatrix small_mat;
 
-    //テンソル積の計算
+    //Calculation of tensor products
     for (int i = 0; i < mat_A_dim; i++) {
         for (int j = 0; j < mat_A_dim; j++) {
-            // 行列Aの要素で行列Bのスカラー倍を計算してブロックの行列を作る
+            //Calculate the scalar multiples of matrix B by the elements of matrix A to create a block matrix
             small_mat = A(i, j) * B;
-            // テンソル積後の行列の適切な部分にブロック行列の値を代入する
+            //Insert the block matrix value to the appropriate part of the matrix after the tensor product
             for (int k = 0; k < mat_B_dim; k++) {
                 for (int l = 0; l < mat_B_dim; l++) {
                     C(k + i * mat_B_dim, l + j * mat_B_dim) = small_mat(k, l);
@@ -49,12 +49,12 @@ ComplexMatrix my_tensor_product(ComplexMatrix A, ComplexMatrix B) {
  * Ref: https://github.com/qulacs/qulacs/blob/master/src/cppsim/gate_factory.cpp#L180
  */
 ComplexMatrix gen_haar_RU(unsigned int num_qubits) {
-    /** n-qubitのHaar Random Unitaryを生成する関数。
-     *  Qulacsに実装されているもの参考に実装した。
+    /** Function to generate an n-qubit Haar Random Unitary.
+     *  Implemented with reference to the one implemented in Qulacs.
      *  Arg:
-     *      num_qubit(int) := 量子ビット数
+     *      num_qubit(int) := number of qubit
      *  Return:
-     *      Q(ComplexMatrix) := Haar Random Unitaryの行列
+     *      Q(ComplexMatrix) := matrix of Haar Random Unitary
      */
     Random random;
     unsigned long long int dim = pow(2, num_qubits);
@@ -77,9 +77,9 @@ ComplexMatrix gen_haar_RU(unsigned int num_qubits) {
     return Q;
 }
 
-/** 現在の日時をstring型で返す関数
- *  シードの初期値やファイル名などの指定に用いる
- *  例) 2021年6月29日22時間58分45秒 => "20210629225845"
+/** Function to return the current date and time as string
+ * Used to specify initial seed values, file names, etc.
+ * Example) 22:58:45, June 29, 2021  => "20210629225845"
  */
 inline std::string getDatetimeStr() {
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
@@ -88,7 +88,7 @@ inline std::string getDatetimeStr() {
     const tm* localTime = localtime(&t);
     std::stringstream s;
     s << "20" << localTime->tm_year - 100;
-    // setw(),setfill()で0詰め
+    //zerofill using setw() and setfill()
     s << std::setw(2) << std::setfill('0') << localTime->tm_mon + 1;
     s << std::setw(2) << std::setfill('0') << localTime->tm_mday;
     s << std::setw(2) << std::setfill('0') << localTime->tm_hour;
@@ -102,42 +102,42 @@ inline std::string getDatetimeStr() {
     localtime_s(&localTime, &t);
     std::stringstream s;
     s << "20" << localTime.tm_year - 100;
-    // setw(),setfill()で0詰め
+    //zerofill using setw() and setfill()
     s << std::setw(2) << std::setfill('0') << localTime.tm_mon + 1;
     s << std::setw(2) << std::setfill('0') << localTime.tm_mday;
     s << std::setw(2) << std::setfill('0') << localTime.tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime.tm_min;
     s << std::setw(2) << std::setfill('0') << localTime.tm_sec;
 #endif
-    // std::stringにして値を返す
+    //return the value as std::string
     return s.str();
 }
 
 class FramePotential {
 private:
-    /* メンバ変数 */
-    unsigned int num_qubits;    //量子ビット数
-    unsigned int depth;         //回路の深さ
-    unsigned long long int dim; //行列の次元
-    unsigned int t;             //t-designの次数t
-    double epsilon;             //収束誤差
-    unsigned int patience;      //収束判定に用いる数
+    /* member variable */
+    unsigned int num_qubits;    //number of qubit
+    unsigned int depth;         //the circuit depth
+    unsigned long long int dim; //dimention of a system
+    unsigned int t;             //the order of t of t-design
+    double epsilon;             //convergence error
+    unsigned int patience;      //Number used to determine convergence
 
-    std::string circuit;        //"LRC"か"RDC"を指定
-    unsigned int num_gates_depthOdd;  //奇数次の深さのときの2qubitのHaarランダムユニタリの数
-    unsigned int num_gates_depthEven; //偶数次の深さのときの2qubitのHaarランダムユニタリの数
+    std::string circuit;        //Specify "LRC" or "RDC" as string type
+    unsigned int num_gates_depthOdd;  //Number of 2-qubit Haar random unitaries at odd order depths
+    unsigned int num_gates_depthEven; //Number of 2-qubit Haar random unitaries at even order depths
 
     std::vector<double> result_oneshot;
     std::vector<double> result_mean;
 
-    /* ユニタリをランダムにサンプルする */
+    /* sample unitary randomly */
     ComplexMatrix sample_unitary();
 
-    /* 収束を判定する */
+    /* determine convergence */
     bool check_convergence();
 
 public:
-    /* コンストラクタ */
+    /* constructor */
     FramePotential(std::string circ) {
         this->circuit = circ;
         this->num_qubits = 3;
@@ -151,24 +151,24 @@ public:
         this->result_mean.clear();
     }
 
-    /* パラメータのセッタ */
+    /* setter of parameters */
     void set_paras(unsigned int Nq, unsigned int D, unsigned int dim_t, double eps, unsigned int pat);
 
-    /* FramePotentialの値を収束まで計算 */
+    /* calculate the value of Frame Potential until it converges */
     void calculate();
 
-    /* 計算結果を出力 */
+    /* output the calculation result */
     void output();
 
-    /* 計算結果をファイル出力 */
+    /* File output of calculation results */
     void save_result(std::string file_name);
 
-    /* 計算結果の取得 */
+    /* getter of calculation results */
     double get_result();
 };
 
 void FramePotential::set_paras(unsigned int Nq, unsigned int D, unsigned int dim_t, double eps = 0.0001, unsigned int pat = 5) {
-    //引数からパラメータ設定
+    //Parameter setting from arguments
     this->num_qubits = Nq;
     this->dim = pow(2, Nq);
     this->depth = D;
@@ -176,7 +176,7 @@ void FramePotential::set_paras(unsigned int Nq, unsigned int D, unsigned int dim
     this->epsilon = eps;
     this->patience = pat;
 
-    //LRCのときの準備
+    //Preparation of "LRC"
     if (this->circuit == "LRC") {
         this->num_gates_depthOdd = Nq / 2;
         if (Nq % 2 == 1) {
@@ -185,7 +185,7 @@ void FramePotential::set_paras(unsigned int Nq, unsigned int D, unsigned int dim
         else {
             this->num_gates_depthEven = (Nq / 2) - 1;
         }
-    //LRC以外のときは0を代入しておく
+    //Assign 0 for the case other than "LRC"
     } else {
         this->num_gates_depthOdd = 0;
         this->num_gates_depthEven = 0;
@@ -214,62 +214,62 @@ void FramePotential::calculate() {
 }
 
 ComplexMatrix FramePotential::sample_unitary() {
-    //最終的に返すユニタリ行列
+    //the unitary matrix that will eventually be returned
     ComplexMatrix big_unitary = Eigen::MatrixXd::Identity(this->dim, this->dim);
 
     if (this->circuit == "LRC") {
-        //LRCの１層のユニタリ行列
+        //Unitary matrix of one layer of LRC
         ComplexMatrix small_unitary;
         for (int i = this->depth; i > 0; i--) {
-            //2qubitのHaarランダムユニタリを生成しテンソル積を取っていく
+            //generate 2-qubit Haar random unitary and take tensor product
             if (i % 2 == 1) {
-                //回路の深さが奇数のとき
+                //if the depth is odd
                 small_unitary = gen_haar_RU(2);
                 for (int j = 0; j < this->num_gates_depthOdd - 1; j++) {
                     small_unitary = my_tensor_product(small_unitary, gen_haar_RU(2));
                 }
-                //量子ビット数、回路の深さともに奇数のときはIdentityを最後につける
+                //When both the number of qubits and the depth of the circuit are odd, the Identity is added at the end.
                 if (this->num_qubits % 2 == 1) {
                     small_unitary = my_tensor_product(small_unitary, Eigen::MatrixXd::Identity(2, 2));
                 }
             }
             else {
-                //回路の深さが偶数のときは最初は必ずIdentity
+                //Whenever the circuit depth is even, the first is always Identity
                 small_unitary = Eigen::MatrixXd::Identity(2, 2);
                 for (int j = 0; j < this->num_gates_depthEven; j++) {
                     small_unitary = my_tensor_product(small_unitary, gen_haar_RU(2));
                 }
-                //量子ビット数が偶数、回路の深さが偶数のときはIdentityを最後につける
+                //If the number of qubits is even and the depth of the circuit is even, put Identity at the end.
                 if (this->num_qubits % 2 == 0) {
                     small_unitary = my_tensor_product(small_unitary, Eigen::MatrixXd::Identity(2, 2));
                 }
             }
-            //行列をかけて各深さごとに作成した(num_qubits)サイズのユニタリをマージしていく
+            //Merging "num_qubits" size of unitaries created for each depth by applying
             big_unitary *= small_unitary;
         }
     }
     else if(this->circuit == "RDC") {
-        //2*2のHゲート(1qubit Hadmard)の行列を作る
+        //create 1-qubit Hadamard matrix
         ComplexMatrix hadmard_matrix_2d = Eigen::MatrixXd(2, 2);
         hadmard_matrix_2d(0, 0) = (1/sqrt(2)) * 1;
         hadmard_matrix_2d(0, 1) = (1/sqrt(2)) * 1;
         hadmard_matrix_2d(1, 0) = (1/sqrt(2)) * 1;
         hadmard_matrix_2d(1, 1) = (1/sqrt(2)) * -1;
-        //num_qubitにかかるHゲート(n-qubit Hadmard)の行列を作る
+        //create "num_qubits"-qubit Hadamard matrix
         ComplexMatrix hadmard_matrix = hadmard_matrix_2d;
         for(int i=0;i<this->num_qubits-1;i++) {
             hadmard_matrix = my_tensor_product(hadmard_matrix, hadmard_matrix_2d);
         }
-        //ランダム対角ユニタリの対角成分を要素に持つベクトルを作成
+        //Create a vector whose elements are the diagonal components of a Random Diagonal Unitary
         ComplexMatrix RDU = Eigen::MatrixXd::Identity(this->dim, this->dim);
-        //RDCの作成
+        //create a RDC
         for(int i=0;i<this->depth;i++) {
-            //RDUの対角成分に値を入れる
+            //Put values in the diagonal components of RDU
             for(int j=0;j<this->dim;j++) {
                 Random random;
                 RDU(j,j) = std::exp(std::complex<float>(0.0, random.uniform() * 2 * M_PI));
             }
-            //RDUとn-qubit Hadmardを交互にかけることをdepth回繰り返す
+            //Repeat alternately applying RDU and "num_qubits"-qubit Hadmard for depth times
             big_unitary *= hadmard_matrix * RDU;
         }
     }
@@ -335,55 +335,55 @@ double FramePotential::get_result() {
 
 
 int main() {
-    //実行例
-    /* パラメータの指定 */
+    //Execution example
+    /* set parameters */
     int ntimes = 10;
     std::vector<int> Nq_list = { 7 };
     std::vector<int> depth_list = { 11,12,13,14,15 };
     std::vector<int> t_list = { 2,3,4,5 };
     double eps = 0.0001;
     unsigned int pat = 5;
-    /* 回路の指定 */
+    /* Specify the circuit */
     std::string circ_type = "LRC";
     //std::string circ_type = "RDC";
     
-    /* クラス呼び出し */
+    /* call the class */
     FramePotential FP = { circ_type };
     
-    /* 実行 */
+    /* begin calculation */
     for (int i = 0; i < t_list.size(); i++) {
         for (int j = 0; j < Nq_list.size(); j++) {
             for (int k = 0; k < depth_list.size(); k++) {
-                //パラメータのセット
+                //set parameters
                 FP.set_paras(Nq_list[j], depth_list[k], t_list[i], eps, pat);
                 std::cout << std::endl << "Now => Nq:" << Nq_list[j] << ", depth:" << depth_list[k] << ", t:" << t_list[i] << std::endl;
-                //ディレクトリ名
+                //set directory name
                 std::string dir_name = circ_type
                                         + "_Nq" + std::to_string(Nq_list[j])
                                         + "_depth" + std::to_string(depth_list[k])
                                         + "_t" + std::to_string(t_list[i]);
-                //ディレクトリ作成
+                //making directory
                 std::filesystem::create_directory("result/" + dir_name);
-                //平均と標準偏差の値を計算するための変数
+                //Variables for calculating mean and standard deviation values
                 double ave = 0.0, std = 0.0;
-                //ntimes回実行
+                //repeat "n" times
                 for(int n=0; n < ntimes; n++) {
-                    //計算開始
+                    //begin calculating the value of Frame Potential
                     FP.calculate();
                     //FP.output();
-                    //ログを保存
+                    //save the log
                     FP.save_result(dir_name + "/n=" + std::to_string(n) + ".csv");
-                    //計算結果を取得し足し込む
+                    //get the calculation results and add them up
                     ave += FP.get_result();
                     std += (FP.get_result() * FP.get_result());
                 }
-                //平均の計算
+                //calculate the average
                 ave /= ntimes;
-                //分散の計算
+                //calculate the standard deviation
                 std = sqrt(std / ntimes - ave * ave);
-                //計算結果の出力
+                //output the result
                 std::cout << "  result : " << ave << "±" << std << std::endl;
-                //計算結果の保存
+                //save the result
                 std::ofstream result_file("./result/" + dir_name + "/ave_std.txt");
                 result_file << ave << "±" << std << std::endl;
                 result_file.close();

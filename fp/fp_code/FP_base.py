@@ -2,16 +2,17 @@ import numpy as np
 import os
 
 class FPBase():
-    """ FramePotentialを計算するにあたっての一番おおもとの抽象(基底)クラス。
-        qubit数や回路の深さ等のパラメータのセットや保存などの基本的な動作を定義する。
+    """ The most basic abstract (base) class for calculating Frame Potential.
+        It defines basic operations such as setting and storing parameters
+        such as the number of qubits and the depth of the circuit.
     """
     def __init__(self, Nq=4, depth=5, t=2, epsilon=0.001) -> None:
-        """ コンストラクタ
+        """ constructor
         """
-        self.Nq = Nq        #qubit数
-        self.depth = depth  #量子回路の深さ(深さがない回路のときはNoneとか)
-        self.t = t          #t-designの次数  
-        self.eps = epsilon  #収束判定の際に用いる変数
+        self.Nq = Nq        #number of qubit
+        self.depth = depth  #Depth of quantum circuit(or None for circuits with no depth)
+        self.t = t          #the order of t-design 
+        self.eps = epsilon  #Variables used in the convergence decision
     
     def set_parameter(self, key, val) -> None:
         if key == "Nq":
@@ -38,15 +39,16 @@ class FPBase():
         raise NotImplementedError("This is abstract method")
 
     def save_result(self, foldername="", log=True, paras={}) -> None:
-        """ 結果の保存を行うメソッド。
-            最終結果とパラメータがtxtファイルで保存され、計算過程は
-            引数のフラグ log に応じて保存するか決定される。
+        """ A method to save the results.
+            The final result and parameters are saved in a txt file, and the
+            calculation process is saved or not according to the argument flag "log".
             Arguments:
-                foldername(str) := 計算結果が保存されるフォルダ名。空のときは現在時刻
-                log(bool)       := Trueのときは過去の計算過程全てをcsvで保存し、
-                                   Falseのときは保存されない
-                paras(dict)     := 追加で保存したいパラメータとかを保持する辞書型
-                                   保存する際は{key} : {value}の形で書き込まれる
+                foldername(str) := Name of the folder where the calculation results will be stored.
+                                   If empty, the current time.
+                log(bool)       := When True, all past calculation processes are saved in csv,
+                                   when False, they are not saved.
+                paras(dict)     := Dictionary type to hold parameters that you want to store additionally.
+                                   When saving, it is written in the form of "{key} : {value}".
         """
         if len(foldername) == 0:
             import datetime

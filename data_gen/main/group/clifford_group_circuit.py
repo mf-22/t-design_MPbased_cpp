@@ -1,4 +1,3 @@
-
 import numpy as np
 from .group_base import GroupBase
 from util.common import I, X, Y, Z, H, S, CZ, list_product

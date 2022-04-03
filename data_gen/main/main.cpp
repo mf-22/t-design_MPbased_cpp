@@ -1,12 +1,12 @@
 #include "DataCreator.hpp"
 
 int main(int argc, char *argv[]) {
-    //教師データの作成器を作成
+    //define a class for creating teacher data
     DataCreator Creator;
-    //設定ファイルからパラメータを読み込み
+    //read parameters from config file
     Creator.read_configFile();
 
-    //コマンドライン引数によるパラメータの指定
+    //set parameters from command line arguments
     if(argc > 1) {
         for(int i=1;i<argc;i++) {
             auto parameter_name = split(argv[i], "=").front();
@@ -14,9 +14,9 @@ int main(int argc, char *argv[]) {
             Creator.set_parameter(parameter_name, parameter_value);
         }
     }
-    //データの作成開始
+    //start creating data
     Creator.run_simulation();
-    //結果の保存
+    //save the created data
     Creator.save_result();
     
     return 0;

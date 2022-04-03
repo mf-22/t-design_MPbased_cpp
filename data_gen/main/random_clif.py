@@ -10,11 +10,11 @@ import sys
 import multiprocessing
 
 def input_parameters():
-    """コマンドラインからパラメータの入力を受け取り辞書型に保存して返す関数
+    """Function that takes parameters input from the command line, stores them in a dictionary type, and returns
     """
     paras_dict = {}
 
-    ## input number of data you want to create(|S|)
+    ##input number of data you want to create(|S|)
     print("input number of data (|S|) :", end=(" "))
     paras_dict["S"] = int(input())
     print("Nu :", end=(" "))
@@ -37,12 +37,13 @@ def input_parameters():
     return paras_dict
 
 def gen_comb_list(num_qubits):
-    """数の組み合わせ(nCr)のパターンを返す関数
-       戻り値は2次元のリストで1次元目はパターンの数、2次元目は実際のパターン
-       例) 3qubit なら
-           [[0], [1], [2],       <= 1点ビット相関
-           [0,1], [0,2], [1,2],  <= 2点ビット相関
-           [0,1,2]]              <= 3点ビット相関
+    """Function which returns patterns of all combinations.
+       The return value is a 2d list, where the first dimension
+       is the number of patterns and the second dimension is the actual pattern.
+       Example) if 3-qubit, then
+           [[0], [1], [2],       <= 1-bit correlation
+           [0,1], [0,2], [1,2],  <= 2-bit correlation
+           [0,1,2]]              <= 3-bit correlation
     """
     bit_list = [i for i in range(num_qubits)]
     result = []
@@ -54,9 +55,9 @@ def gen_comb_list(num_qubits):
     return result
 
 def gen_random_index(order):
-    """ (0, order]の範囲でランダムに整数を生成し返す関数
-        似たことを行うものにnp.random.randintがあるが、上限が2^31であり
-        クリフォード群の位数よりも小さいため自作のものを用いる
+    """ Function to generate and return a random integer in the range [0, order).
+        There is np.random.randint that does something similar, but it has an upper
+        limit of 2^31, which is smaller than the rank of Clifford group.
     """
     d = str(order)
     dig_num = len(d)
@@ -71,49 +72,49 @@ def gen_random_index(order):
             return clif_index
 
 def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list, np_seed):
-    ## numpyの乱数のシードを指定, OSに依存しないように
+    ##Set the seed of numpy to be OS independent
     np.random.seed(np_seed)
 
-    ## 最終的に作成する教師データの配列
+    ##Define the array of teacher data to be created finally
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
-    ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
+    ##Prepare an array to store the results of the measurement probability(expected value of bit correlation) calculations
     MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
-    ## 量子状態の準備
+    ##Preparation of quantum state
     state = QuantumState(Nq)
-    ## 2qubitのクリフォード群を宣言、位数は11520
-    ## 4×4の行列ではなくゲート列が返ってくる
+    ## Declare 2qubit Clifford group, the rank is 11520
+    ## Gate columns are returned instead of 4x4 matrices
     ccg = CliffordCircuitGroup(2)
     ##order = ccg.order <= 11520
     #cg = CliffordGroup(2)
 
-    ## 2進数のリストを作成
+    ##Create a list of binary numbers
     binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
     for i in range(2**Nq):
         binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
-        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num[binary_num == 0] = -1 #convert 0 to -1
         binary_num_list[i] = binary_num
 
     for i in range(S):
-        ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
+        ##Fix initial state per teacher data, this is the seed for that
         haar_seed = np.random.randint(2147483648) #2^31
         for j in range(Nu):
-            ## 初期状態をHaar random stateにする
+            ##Set initial state to Haar random state
             state.set_Haar_random_state(haar_seed)
-            ## 2qubitのランダムクリフォードを互い違いにかけていく
+            ##Apply 2-qubit random cliffords to each other
             for k in range(1, depth+1):
                 for qubit_index in RU_index_list[k%2]:
                     circuit = ccg.get_element(np.random.randint(11520))
                     ccg.simulate_circuit_specific_qubit(2, circuit, state, qubit_index)
                     #DenseMatrix([qubit_index, qubit_index+1], cg.get_element(np.random.randint(11520))).update_quantum_state(state)
-            ## 測定を行う
+            ##perform a measurement
             result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
-            ## ビット相関を計算し、測定確率を計算
+            ##Calculate bit correlations and compute measurement probabilities
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
                 MP_list[j][k] = np.mean(bit_corr)
-        ## モーメントの計算
+        ##Calculate the moment of measument probability
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         print("\r{} / {} finished...".format(i+1, S), end=(""))
     print("")
@@ -121,49 +122,48 @@ def sim_local_random_clifford(S, Nu, Ns, Nq, depth, RU_index_list, comb_list, np
     return teacher_data
 
 def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list, comb_list, np_seed):
-    ## numpyの乱数のシードを指定, OSに依存しないように
+    ##Set the seed of numpy to be OS independent
     np.random.seed(np_seed)
 
-    ## 最終的に作成する教師データの配列
+    ##Define the array of teacher data to be created finally
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
-    ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
+    ##Prepare an array to store the results of the measurement probability(expected value of bit correlation) calculations
     MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
-    ## 量子状態の準備
+    ##Set initial state to Haar random state
     state = QuantumState(Nq)
-    ## 2qubitのクリフォード群を宣言、位数は11520
-    ## 4×4の行列ではなくゲート列が返ってくる
+    ## Declare 2qubit Clifford group, the rank is 24
     cg = CliffordGroup(1)
-    ##order = ccg.order <= 24
+    ##order = cg.order <= 24
 
-    ## 2進数のリストを作成
+    ##Create a list of binary numbers
     binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
     for i in range(2**Nq):
         binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
-        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num[binary_num == 0] = -1 #convert 0 to -1
         binary_num_list[i] = binary_num
 
     for i in range(S):
-        ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
+        ##Fix initial state per teacher data, this is the seed for that
         haar_seed = np.random.randint(2147483648) #2^31
         for j in range(Nu):
-            ## 初期状態をHaar random stateにする
+            ##Set initial state to Haar random state
             state.set_Haar_random_state(haar_seed)
-            ## 2qubitのランダムクリフォードを互い違いにかけていく
+            ##Apply 2-qubit random cliffords to each other
             for k in range(1, depth+1):
                 for qubit_index in RU_index_list[k%2]:
                     CNOT(qubit_index, qubit_index+1).update_quantum_state(state)
                     clif_matrix = cg.sampling(2)
                     DenseMatrix(qubit_index, clif_matrix[0]).update_quantum_state(state)
                     DenseMatrix(qubit_index+1, clif_matrix[1]).update_quantum_state(state)
-            ## 測定を行う
+            ##perfomr a measurement
             result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
-            ## ビット相関を計算し、測定確率を計算
+            ##Calculate bit correlations and compute measurement probabilities
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
                 MP_list[j][k] = np.mean(bit_corr)
-        ## モーメントの計算
+        ##Calculate the moment of measument probability
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         print("\r{} / {} finished...".format(i+1, S), end=(""))
     print("")
@@ -171,48 +171,48 @@ def sim_local_random_clif_CNOTand1qubitClif(S, Nu, Ns, Nq, depth, RU_index_list,
     return teacher_data
 
 def sim_random_clifford(S, Nu, Ns, Nq, comb_list, np_seed):
-    ## numpyの乱数のシードを指定, OSに依存しないように
+    ##Set the seed of numpy to be OS independent
     np.random.seed(np_seed)
 
-    ## 最終的に作成する教師データの配列
+    ##Define the array of teacher data to be created finally
     teacher_data = np.empty((S, len(comb_list)*20), dtype=np.float32)
-    ## 測定確率(ビット相関の期待値)の計算結果を保存する配列を用意
+    ##Prepare an array to store the results of the measurement probability(expected value of bit correlation) calculations
     MP_list = np.empty((Nu, len(comb_list)), dtype=np.float32)
-    ## 量子状態の準備
+    ##Set initial state to Haar random state
     state = QuantumState(Nq)
-    ## 2qubitのクリフォード群を宣言
-    ## (2^n)×(2^n)の行列ではなくゲート列が返ってくる
+    ## Declare Nq-qubit Clifford group
+    ## Gate columns are returned instead of (2^n)x(2^n) matrices
     ccg = CliffordCircuitGroup(Nq)
-    ## クリフォード群の要素数を取得
+    ##Get the number of elements in the Clifford group
     order = ccg.order
 
-    ## 2進数のリストを作成
+    ##Create a list of binary numbers
     binary_num_list = np.empty((2**Nq, Nq), dtype=np.int8)
     for i in range(2**Nq):
         binary_num = np.array(list(bin(i)[2:].zfill(Nq))).astype(np.int8)
-        binary_num[binary_num == 0] = -1 #0を-1に変換
+        binary_num[binary_num == 0] = -1 #convert 0 to -1
         binary_num_list[i] = binary_num
 
     for i in range(S):
-        ## 教師データ1つにつき初期状態を固定する、そのための乱数のシード
+        ##Fix initial state per teacher data, this is the seed for that
         haar_seed = np.random.randint(2147483648) #2^31
         for j in range(Nu):
-            ## 初期状態をHaar random stateにする
+            ##Set initial state to Haar random state
             state.set_Haar_random_state(haar_seed)
             #state.set_Haar_random_state(1746904691)
             #state.set_zero_state()
-            ## ランダムクリフォードの実行
+            ##apply a Nq-qubit random clifford operator
             circuit = ccg.get_element(gen_random_index(order))
             ccg.simulate_circuit(Nq, circuit, state)
-            ## 測定を行う
+            ##perfomr a measurement
             result_bin = np.array([binary_num_list[i] for i in state.sampling(Ns)])
-            ## ビット相関を計算し、測定確率を計算
+            ##Calculate bit correlations and compute measurement probabilities
             for k, combination in enumerate(comb_list):
                 bit_corr = result_bin[:, combination[0]].copy()
                 for index in range(1, len(combination)):
                     bit_corr *= result_bin[:, combination[index]]
                 MP_list[j][k] = np.mean(bit_corr)
-        ## モーメントの計算
+        ##Calculate the moment of measument probability
         teacher_data[i] = np.array([np.power(MP_list, m).mean(axis=0) for m in range(1, 21)]).flatten()
         #teacher_data[i] = np.array([np.abs(np.power(MP_list, m)).mean(axis=0) for m in range(1, 21)]).flatten()
         print("\r{} / {} finished...".format(i+1, S), end=(""))
@@ -222,30 +222,30 @@ def sim_random_clifford(S, Nu, Ns, Nq, comb_list, np_seed):
 
 
 def main(n_proc = -1, **kwargs):
-    ## パラメータ読み込み
+    ## read parameters
     if len(kwargs) == 0:
         paras_dict = input_parameters()
     else:
         paras_dict = kwargs
-    ## ビット相関計算時のqubitのインデックスのリスト
+    ##List of indexes of qubit during bit correlation calculation
     comb_list = gen_comb_list(paras_dict["Nq"])
 
-    ## 処理開始時の時間の取得
+    ##Obtain the time when the process starts
     start = time.perf_counter()
 
-    ## 生成するプロセス数を決定
+    ##Determine the number of processes to generate
     if n_proc == -1:
         n_proc = multiprocessing.cpu_count()
 
-    ## Local Random Cliffordの計算
+    ## Calculation of Local Random Clifford
     if paras_dict["local"] == 1:
         RU_index_list = []
-        ## 深さが"奇数"のときのlocal random cliffordがかかるqubitのインデックス
+        ## Index of qubit over which the local random clifford is applied when the depth is "odd"
         RU_index_list.append([i for i in range(1, paras_dict["Nq"]-1, 2)])
-        ## 深さが"偶数"のときのlocal random cliffordがかかるqubitのインデックス
+        ## Index of qubit over which the local random clifford is applied when the depth is "even"
         RU_index_list.append([i for i in range(0, paras_dict["Nq"]-1, 2)])
 
-        ## 並列実行
+        ##parallel execution
         if n_proc != 1:
             multi_S, remain = divmod(paras_dict["S"], n_proc)
             print("S={}, n_proc={}, multi_S={}or{}"
@@ -256,7 +256,7 @@ def main(n_proc = -1, **kwargs):
                      (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"],
                      paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
                     for i in range(n_proc)]
-            ## 並列実行の開始
+            ##start parallel execution by calling the function parallely
             if paras_dict["CNOT_1qC"] == 0:
                 p = multiprocessing.Pool(n_proc)
                 returns = p.starmap(sim_local_random_clifford, args)
@@ -265,12 +265,12 @@ def main(n_proc = -1, **kwargs):
                 p = multiprocessing.Pool(n_proc)
                 returns = p.starmap(sim_local_random_clif_CNOTand1qubitClif, args)
                 p.close()
-            ##　それぞれのスレッドの実行結果をひとまとめにする
+            ##Consolidate the results of each thread's execution
             result = np.concatenate(returns, axis=0)
 
-        ## 逐次実行
+        ##sequential execution
         else:
-            ## 量子回路シミュレーションと測定確率の計算
+            ##Quantum circuit simulation and calculation of measurement probabilities, sequentially
             if paras_dict["CNOT_1qC"] == 0:
                 result = sim_local_random_clifford(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], paras_dict["Nq"],
                                                    paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
@@ -278,7 +278,7 @@ def main(n_proc = -1, **kwargs):
                 result = sim_local_random_clif_CNOTand1qubitClif(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], paras_dict["Nq"],
                                                                  paras_dict["depth"], RU_index_list, comb_list, np.random.randint(2147483648))
 
-    ## Random Cliffordの計算
+    ##Calculation of Random Cliford operator
     else:
         if n_proc != 1:
             multi_S, remain = divmod(paras_dict["S"], n_proc)
@@ -288,26 +288,26 @@ def main(n_proc = -1, **kwargs):
                     if i < remain else
                     (multi_S, paras_dict["Nu"], paras_dict["Ns"],paras_dict["Nq"], comb_list, np.random.randint(2147483648))
                     for i in range(n_proc)]
-            ## 並列実行の開始
+            ##start parallel execution by calling the function parallely 
             p = multiprocessing.Pool(n_proc)
             returns = p.starmap(sim_random_clifford, args)
             p.close()
-            ##　それぞれのスレッドの実行結果をひとまとめにする
+            ##Consolidate the results of each thread's execution
             result = np.concatenate(returns, axis=0)            
 
         else:
-            ## 量子回路シミュレーションと測定確率の計算
+            ##Quantum circuit simulation and calculation of measurement probabilities, sequentially
             result = sim_random_clifford(paras_dict["S"],  paras_dict["Nu"], paras_dict["Ns"], 
                                          paras_dict["Nq"], comb_list, np.random.randint(2147483648))
     
-    ## 処理終了時の時間の取得
+    ##Obtain the time at the end of processing
     finish = time.perf_counter()
-    ## 時間の取得
+    ##Obtain the current time
     dt_now = datetime.datetime.now()
     dt_index = dt_now.strftime("%Y%m%d%H%M%S")
-    ## 結果の保存
+    ##save the simulaiton result
     np.save("../result/clif_{}.npy".format(dt_index), result)
-    ## パラメータの保存
+    ##save the all parameters
     with open("../result/info_clif_{}.txt".format(dt_index), mode="w") as f:
         f.write("|S| : {}\n".format(paras_dict["S"]))
         f.write(" Nu : {}\n".format(paras_dict["Nu"]))
@@ -318,40 +318,20 @@ def main(n_proc = -1, **kwargs):
             f.write("CNOT&1q clif : {}\n".format(paras_dict["CNOT_1qC"]))
         f.write("bit corrlation : {}\n".format(paras_dict["Nq"]))
         f.write("dim of moments : 1~20\n")
-    ## 色々出力
+    ##Various output
     print('\nData is saved as "clif_{}.npy".'.format(dt_index))
     print('Information(parameters) of this data is in "info_clif_{}.npy".'.format(dt_index))
     print("Creating Time : {}[s].".format(finish-start))
 
 
 if __name__ == "__main__":
-    ## Cliffordのシミュレーション時の並列計算の並列プロセス数。
-    ## -1のとき使用できる最大スレッド数とし、-1をデフォルトとする。
+    ## Number of parallel processes for parallel computation during Clifford simulation.
+    ## The maximum number of threads that can be used when -1, and defaults to -1.
     n_proc = -1
-    ## コマンドライン引数で"n_proc=1"のような形で生成するプロセス数を指定
+    ##Specify the number of processes to be created with a command line argument such as "n_proc=1"
     args = sys.argv
     for arg in args:
         if "n_proc=" in arg:
             n_proc = int(arg.split("=")[-1])
     
     main(n_proc)
-
-    """
-    ## スパコンのジョブ形式で実行するときは以下を使う
-    ## デフォルトのパラメータ
-    paras = {"S":10000, "Nu":1000, "Ns":1000, "Nq":5, "local":0, "depth":0, "CNOT_1qC":0}
-    n_proc = 8
-    ## コマンドライン引数を取り込む
-    args = sys.argv
-    for arg in args:
-        if "=" in arg:
-            key,val = arg.split("=")
-            if key == "n_proc":
-                n_proc = int(val)
-            elif key in paras:
-                paras[key] = int(val)
-            else:
-                print('**KEY ERROR: "{}" is not exist'.format(key))
-    
-    main(n_proc, **paras)
-    """

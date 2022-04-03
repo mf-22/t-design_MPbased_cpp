@@ -6,9 +6,9 @@ import numpy as np
 
 
 def gen_random_index(order):
-    """ (0, order]の範囲でランダムに整数を生成し返す関数
-        似たことを行うものにnp.random.randintがあるが、上限が2^31であり
-        クリフォード群の位数よりも小さいため自作のものを用いる
+    """ Function to generate and return a random integer in the range [0, order).
+        There is np.random.randint that does something similar, but it has an upper
+        limit of 2^31, which is smaller than the rank of Clifford group.
     """
     d = str(order)
     dig_num = len(d)
@@ -27,7 +27,6 @@ class FP_RC(FP_calc_base.FP_main_base):
     def __init__(self, Nq=4, depth=5, t=2, epsilon=0.001, patience=5, monitor="mean") -> None:
         super(FP_RC, self).__init__(Nq=Nq, depth=depth, t=t, epsilon=epsilon, patience=patience, monitor=monitor)
         self.circ_type = "RC"
-        ## RCの対角行列の後のn-qubitにかかるHadmardゲートの行列を作っておく
         self.group = clifford_group.CliffordGroup(Nq)
         self.order = self.group.order
 

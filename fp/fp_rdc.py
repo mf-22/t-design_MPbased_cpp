@@ -6,20 +6,20 @@ class FP_RDC(FP_calc_base.FP_main_base):
     def __init__(self, Nq=4, depth=5, t=2, epsilon=0.001, patience=5, monitor="mean") -> None:
         super(FP_RDC, self).__init__(Nq=Nq, depth=depth, t=t, epsilon=epsilon, patience=patience, monitor=monitor)
         self.circ_type = "RDC"
-        ## RDCの対角行列の後のn-qubitにかかるHadmardゲートの行列を作っておく
+        ##Create a matrix of Hadmard gates over n-qubits which applied after the diagonal matrix
         hadmard = 1/np.sqrt(2) * np.array([[1, 1], [1, -1]])
         self.hadmard_n_size = 1/np.sqrt(2) * np.array([[1, 1], [1, -1]])
         for _ in range(Nq-1):
             self.hadmard_n_size = np.kron(self.hadmard_n_size, hadmard)
 
     def sample_U(self) -> np.ndarray:
-        ## 2^Nq * 2^Nq の大きさのidentity
-        ## これに各深さのlocal 2-qubit haar gateを結合したものの行列積を計算することで
-        ## 最終的に欲しいユニタリを作る
+        ##Identity matrix with the size (2^Nq)*(2*Nq).
+        ##Finally, the desired unitary is created by computing the matrix product
+        ##of the combined local 2-qubit haar gates at each depth.
         big_unitary = np.identity(2**self.Nq) 
 
-        ## 回路の深さ分繰り返す
-        for i in range(self.depth):
+        ##Repeat for circuit depth
+        for _ in range(self.depth):
             big_unitary = big_unitary @ self.hadmard_n_size @ np.diag(np.exp(np.random.rand(2**self.Nq) * 2 * np.pi * 1j))
         
         return big_unitary

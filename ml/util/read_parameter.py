@@ -1,9 +1,10 @@
 def get_num_qubits(data_name):
-    """ 教師データ作成時のパラメータを保存してあるファイルから量子ビット数の値を読んで返す
+    """ Reads and returns the value of the number of qubits from a file that saves
+        the parameters used to create the teacher data.
         Arg:
-            data_name(string) := データセットのフォルダ名の文字列
+            data_name(string) := Folder name string for the dataset
         Return:
-            Nq(int) := データ作成時の量子ビット数
+            Nq(int) := Number of qubits in data creation
     """
     with open("./datasets/{}/info.txt".format(data_name), mode="r") as f:
         l_strip = [s.strip() for s in f.readlines()]
@@ -16,12 +17,12 @@ def get_num_qubits(data_name):
     return Nq
 
 def get_birCorr_moment(dir_path):
-    """ 計算したビット相関の個数と、モーメントの次数を取得する
+    """ Get the number of bit correlations calculated and the order of the moment
         Arg:
-            dir_path(string)  := 実験結果が保存されるフォルダ名の文字列
+            dir_path(string)  := String for the name of the folder where the experiment results will be saved.
         Returns:
-            k(int)             := 計算した相関のビット数
-            k_prime_list(list) := 計算したモーメントの次数の数値(int)を要素に持つリスト
+            k(int)             := Number of bits of correlation calculated
+            k_prime_list(list) := List whose elements are numerical values(int) of the order of the calculated moments
     """
 
     with open(dir_path+"extract_parameters.txt", mode="r") as f:

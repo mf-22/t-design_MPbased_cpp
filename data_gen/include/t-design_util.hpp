@@ -9,8 +9,8 @@
 #include <iomanip>
 #include <math.h>
 
-/** ランダム対角ユニタリ行列の対角成分を生成する関数
- * qulacsのmultiply_elementwise_functionに渡す
+/** Function to generate the diagonal components of a random diagonal unitary matrix
+ * Pass to the function "multiply_elementwise_function" in qulacs
  */
 inline std::complex<double> gen_RandomDiagonal_element(ITYPE dummy) {
     //calculate exp( (0,2pi] * i )
@@ -18,66 +18,68 @@ inline std::complex<double> gen_RandomDiagonal_element(ITYPE dummy) {
     return std::exp(std::complex<double>(0.0, random.uniform() * 2 * M_PI));
 }
 
-/** 組み合わせ(nCr)を作るために利用する関数
- */
+/* Function to create the combination(nCr) */
 inline void recursive_set(int n, int r, std::vector<std::vector<int>>& v, std::vector<int>& pattern) {
-    /* 引数の説明
-    int n := qubit数
-    int r := ビット相関数(k点ビット相関)
-    std::vector v := create_comb_list関数から参証渡しされたリスト
-                このリストにビットの組み合わせを保存する
-    std::vector pattern := 基準になるパターンのリスト
-                      この最後の要素をインクリメントして組み合わせを作る
-                      関数から戻すときは更新してから返す
+    /* Explanation of arguments
+        int n := number of qubits
+        int r := number of bit correlations (k-point bit correlations)
+        std::vector v
+            := list passed by reference from the function "create_comb_list"
+               Store bit combinations in this list
+        std::vector pattern
+            := list of reference patterns
+               Increment this last element to create the combination
+               When returning from a function, update it before returning.
     */
     
-    /* 変数の説明
-    std::vector temp := patternを書き換えてvにプッシュしていくが、もとのpattern
-                   の配列は今後も使いたい.そこでtempというpatternのコピー
-                   を作ってtempを弄ってvにpushしていく
-    int poped := patternの末尾をpopしたときに得られた値
-    int poped_next := patternを連続してpopするとき、次にpopする予定の位置の値
-    int poped_thre := patternを連続してpopするか決定するための閾値
+    /* Explanation of variables in this function
+        std::vector temp
+            := The pattern is rewritten and pushed to v, but we want to
+               continue to use the original array of patterns.
+               So we make a copy of the pattern called "temp", modify temp, and push it to v.
+        int poped := Value obtained when the end of pattern is popped
+        int poped_next := When a pattern is continuously popped, the value of the position to be popped next.
+        int poped_thre := Threshold for determining whether to pop a pattern consecutively
     */
 
-    //patternの長さがrのとき => 組み合わせ列挙開始
+    //the lentgh of "pattern" is r => start emumeration
     if (pattern.size() == r) {
         std::vector<int> temp = pattern;
         int poped;
         int pop_next;
         int pop_thre = n - 1;
 
-        //patternの最後尾をインクリメントしていき組み合わせのリストvにpushしていく
+        //push intto the combination list "v" by incrimenting the last of "pattern"
         for (int i=pattern[r-1];i<n;++i) {
             v.push_back(temp);
             temp[r-1] = i + 1;
         }
 
-        //patternを更新
+        //update "pattern"
         while(true) {
             poped = pattern.back();
             pattern.pop_back();
 
-            //popしてpatternが空になったとき => 組み合わせの列挙が終わっているはずなので終了
+            //if the size of "pattern" become empty by poping => permutationg combinations shoud have be finished 
             if (pattern.size() == 0) {
                 break;
             }
-            //popedがpop_threのとき => 次を見る
+            //if "poped" is "pop_thre" => see next
             else if (poped == pop_thre) {
                 pop_next = pattern.back();
-                //pop_nextがpop_thre-1じゃないとき => patternを更新してbreak
+                //if "pop_next" is not "pop_thre" => update "pattern" and break
                 if (pop_next != pop_thre-1){
                     poped = pattern.back() + 1;
                     pattern.pop_back();
                     pattern.push_back(poped);
                     break;
                 }
-                //pop_nextがpop_thre-1のとき => pop_threをデクリメントし,もう一度このwhileループ
+                //if "pop_next" is "pop_thre-1" => decrement "pop_thre" and repeat this while loop
                 else {
                     pop_thre = pop_thre - 1;
                 }
             }
-            //popedがpop_threでないとき => 末尾の値+1してbreak
+            //if "poped" is not "pop_thre" => add 1 to the last value and break
             else {
                 poped = pattern.back() + 1;
                 pattern.pop_back();
@@ -86,7 +88,7 @@ inline void recursive_set(int n, int r, std::vector<std::vector<int>>& v, std::v
             }
         }
     }
-    //patternの長さがrより小さいとき => 適切な初期patternになるよう追加し再帰
+    //if the length of "pattern" is smaller than "r" => add to become appropriate initial "pattern" and recurse
     else {
         int last_index = pattern.size()-1;
         pattern.push_back(pattern[last_index]+1);
@@ -94,26 +96,24 @@ inline void recursive_set(int n, int r, std::vector<std::vector<int>>& v, std::v
     }
 }
 
-/** 組み合わせ(nCr)を作成する関数
- * nとrを指定し2次元のリストを渡すと、そのリストに全通りの組み合わせを入れて返す
+/** Function to create a combination (nCr)
+ * When you specify "n" and "r" and pass a 2-dimensional list, it returns all possible combinations in the list.
  */
 inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_list) {
-    /* 引数の説明
-    int n := qubit数
-    int r := ビット相関数(k点ビット相関)
-             組み合わせはよく"nCr"と書くので揃えてみた
-    std::vector comb_list := main関数などから参照渡しされたリスト
-                        このリストにビットの組み合わせを保存する
+    /* Explanations of areguments
+    int n := number of qubits
+    int r := number of bit correlation(k bit correlation)
+    std::vector comb_list := list passed by reference from main function, etc.
+                             store bit combinations in this list
     */
     
-    /* 変数の説明
-    p_list := 基準になるパターンのリスト
-              これをrecursive_setに渡して
-              最後をインクリメントして組み合わせを作る
-              r=1,nのときは簡単に返せる
+    /* Explanations of a variable
+    p_list := List of a reference pattern.
+              Pass this to "recursive_set" and increment the last to make a combination.
+              r=1,n can be returned easily
     */
 
-    //1点相関のとき => 単に各インデックスを2次元配列で返す
+    //if 1-bit correlation => simply return each index as a 2d array
     if (r == 1) {
         std::vector<int> p_list = {0};
         for(int i=0;i<n;++i) {
@@ -121,7 +121,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
             p_list[0] = p_list[0] + 1;
         }
     }
-    //n点相関(例.5qubit5点相関)のとき => 単に0からnまでの1次元のリストを返す
+    // if n-bit correlation(e.g.5-qubit and 5-bit corr) => simply return a 1d list from 0 to n
     else if (n == r) {
         std::vector<int> p_list;
         for(int i=0;i<n;++i) {
@@ -129,7 +129,7 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
         }
         comb_list.push_back(p_list);
     }
-    //上記以外のk点相関のとき
+    //if k-point correlations other than the above
     else {
         std::vector<int> p_list;
         for(int i=0;i<r;++i) {
@@ -141,8 +141,8 @@ inline void create_comb_list(int n, int r, std::vector<std::vector<int>>& comb_l
     }
 }
 
-/** 組み合わせ(nCr)について、nを指定したときにr=1から
- *  r=nまでの全ての組み合わせを生成する関数
+/** Function to generate all combinations from r=1 to r=n 
+ *  when n is specified for a combination (nCr)
  */
 inline std::vector<std::vector<int>> get_possibliyMax_bitCorr(unsigned int num_qubits) {
     std::vector<std::vector<int>> bitCorr_list;
@@ -154,9 +154,9 @@ inline std::vector<std::vector<int>> get_possibliyMax_bitCorr(unsigned int num_q
     return bitCorr_list;
 }
 
-/** 現在の日時をstring型で返す関数
- *  シードの初期値やファイル名などの指定に用いる
- *  例) 2021年6月29日22時間58分45秒 => "20210629225845"
+/** Function to return the current date and time as string
+ * Used to specify initial seed values, file names, etc.
+ * Example) 22:58:45, June 29, 2021  => "20210629225845"
  */
 inline std::string getDatetimeStr() {
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
@@ -165,7 +165,7 @@ inline std::string getDatetimeStr() {
     const tm* localTime = localtime(&t);
     std::stringstream s;
     s << "20" << localTime->tm_year - 100;
-    // setw(),setfill()で0詰め
+    //zerofill using setw() and setfill()
     s << std::setw(2) << std::setfill('0') << localTime->tm_mon + 1;
     s << std::setw(2) << std::setfill('0') << localTime->tm_mday;
     s << std::setw(2) << std::setfill('0') << localTime->tm_hour;
@@ -179,13 +179,13 @@ inline std::string getDatetimeStr() {
     localtime_s(&localTime, &t);
     std::stringstream s;
     s << "20" << localTime.tm_year - 100;
-    // setw(),setfill()で0詰め
+    //zerofill using setw() and setfill()
     s << std::setw(2) << std::setfill('0') << localTime.tm_mon + 1;
     s << std::setw(2) << std::setfill('0') << localTime.tm_mday;
     s << std::setw(2) << std::setfill('0') << localTime.tm_hour;
     s << std::setw(2) << std::setfill('0') << localTime.tm_min;
     s << std::setw(2) << std::setfill('0') << localTime.tm_sec;
 #endif
-    // std::stringにして値を返す
+    //return the value as std::string
     return s.str();
 }

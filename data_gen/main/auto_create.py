@@ -6,7 +6,7 @@ import subprocess
 import platform
 import glob
 
-## 実行ファイル名を環境に応じて指定
+##Specify the name of the executable file according to your environment
 if platform.system() == "Windows":
     env = "win"
     exe_cpp = "msvc_project.exe"
@@ -40,7 +40,7 @@ def create_one_data(n_proc):
         else:
             print("please input 1, 2, 3, or 4.\n")
 
-    ## input number of data you want to create(|S|)
+    ##input the number of data you want to create(|S|)
     print("input number of data (|S|) :", end=(" "))
     S = int(input())
     print("Nu :", end=(" "))
@@ -83,17 +83,17 @@ def create_one_data(n_proc):
 def auto_create(n_proc):
     print("\n*** start creating dataset ***")
 
-    ## input folder name and number of test datasets you need
+    ##input folder name and number of test datasets you need
     print("input folder name :", end=(" "))
     folder_name = input()
     print("input the number of test datasets :", end=(" "))
     test_dataset_num = int(input())
 
-    ## set directory pass
+    ##set directory pass
     folder_1 = folder_name + "/"  ## folder_1 := "datasetX/"
     folder_2 = folder_1 + "test/" ## folder_2 := "datasetX/test/"
 
-    ## add windows command of make directory
+    ##add windows command of making directory
     cmd_array = ["mkdir " + folder_name,            ## mkdir datasetX
                  "mkdir " + folder_1 + "train",     ## mkdir datasetX/trian
                  "mkdir " + folder_1 + "valid",     ## mkdir datasetX/valid
@@ -101,9 +101,9 @@ def auto_create(n_proc):
                 ]
 
     for i in range(test_dataset_num):
-        cmd_array.append("mkdir " + folder_2 + "test{}".format(i+1))  ## mkdir datasetX/test/test1
+        cmd_array.append("mkdir " + folder_2 + "test{}".format(i+1))  #mkdir datasetX/test/test1
 
-    ## detailed settings for data creation
+    ##detailed settings for data creation
     print("\nDo you custom? (y/n)")
     while True:
         custom = input()
@@ -113,7 +113,7 @@ def auto_create(n_proc):
             print('please input "y" or "n".')
 
     if custom == "y":
-        ## decide which data you create
+        ##decide which data you create
         print("\ninput index == 1:haar  2:clifford  3:LRC  4:RDC (0:don`t create)")
         print("train1 : ", end=(" "))
         train1_type = int(input())
@@ -131,14 +131,14 @@ def auto_create(n_proc):
                 test_type[i][j] = int(input())
 
     elif custom == "n":
-        ## decide 2 data type
+        ##decide 2 data type
         print("\ninput index == 1:haar  2:clifford  3:LRC  4:RDC")
         print("data_type1 : ", end=(" "))
         data_type1 = int(input())
         print("data_type2 : ", end=(" "))
         data_type2 = int(input())
 
-    ## summarize the data
+    ##summarize the data
     datatype_index = ["haar", "clifford", "LRC", "RDC"]
     order_array = []
     if custom == "y":
@@ -149,7 +149,7 @@ def auto_create(n_proc):
         for i in range(test_dataset_num):
             for j in range(2):
                 if test_type[i][j] == 0:
-                    ## don`t create
+                    ##don`t create
                     pass
                 else:
                     order_array.append(datatype_index[int(test_type[i][j]-1)] + " - test{}".format(i+1))
@@ -172,7 +172,7 @@ def auto_create(n_proc):
             test_type[i][0] = data_type1
             test_type[i][1] = data_type2
 
-    ## input parameters
+    ##input parameters
     print("\ninput parameters of circuit simulation")
     print("train |S| :", end=(" "))
     train_S = int(input())
@@ -187,7 +187,7 @@ def auto_create(n_proc):
     print("Nq :", end=(" "))
     Nq = int(input())
     if "clifford" in "".join(order_array) or "LRC" in "".join(order_array) or "RDC" in "".join(order_array):
-        ## detailed settings of circuit depth
+        ##detailed settings of circuit depth
         print("Do you change the depth according to the data? (y/n)")
         while True:
             depth_custom = input()
@@ -223,7 +223,7 @@ def auto_create(n_proc):
                 i_CNOT_1qC = 0
     
     if "LRC" in "".join(order_array):
-        ## detailed settings of circuit depth
+        ##detailed settings of circuit depth
         print("Do you change the noise config according to the data? (y/n)")
         while True:
             noise_custom = input()
@@ -262,14 +262,14 @@ def auto_create(n_proc):
 
     print("start creating data...")
     start = time.perf_counter()
-    ## execute windows command of make directory
+    ##execute windows command of make directory
     for cmd in cmd_array:
         if env == "win":
             subprocess.call(cmd.replace("/", "\\"), shell=True)
         elif env == "lin":
             subprocess.call(cmd, shell=True)
 
-    ## create data
+    ##create data
     for i in range(len(order_array)):
         print("\n" + order_array[i])
         ## define data type
@@ -297,7 +297,7 @@ def auto_create(n_proc):
             if depth_custom == "y":
                 i_depth = depth_array[i]
 
-        ## define the datasize according to the purpose of deeplearning
+        ##define the datasize according to the purpose of deeplearning
         if "train" in order_array[i]:
             purpose = "train"
             S = train_S
@@ -308,32 +308,32 @@ def auto_create(n_proc):
             purpose = "test"
             S = test_S
 
-        ## create the data my calling each function
+        ##create the data my calling each function
         if circuit_id == 2:
-            ## random cliffordue)
+            ##random clifford
             paras = {"S":S, "Nu":Nu, "Ns":Ns, "Nq":Nq, "local":i_local, "depth":i_depth, "CNOT_1qC":i_CNOT_1qC}
             random_clif.main(n_proc, **paras)
         elif circuit_id == 1:
-            ## haar measure
+            ##haar measure
             subprocess.run("{} unitary_type=0 S={} Nu={} Ns={} Nq={}".format(exe_cpp, S, Nu, Ns, Nq), shell=True)
         elif circuit_id == 3:
-            ## local random circuit
+            ##local random circuit
             subprocess.run("{} unitary_type=2 S={} Nu={} Ns={} Nq={} depth={} noise_operator={} noise_prob={}" \
                         .format(exe_cpp, S, Nu, Ns, Nq, i_depth, i_noise_ope, i_noise_prob), shell=True)
         elif circuit_id == 4:
-            ## random diagonal circuit
+            ##random diagonal circuit
             subprocess.run("{} unitary_type=3 S={} Nu={} Ns={} Nq={} depth={}" \
                         .format(exe_cpp, S, Nu, Ns, Nq, i_depth), shell=True)
 
-        ## Move the created data to correct place
-        ## get the path of the data just created now
+        ##Move the created data to correct place
+        ##get the path of the data just created now
         if circuit_id == 2:
             datafile_path = glob.glob("../result/clif_*.npy")[-1]
         elif circuit_id == 1 or circuit_id == 3 or circuit_id == 4:
             datafile_path = glob.glob("../result/{}_*.csv".format(ident))[-1]
         infofile_path = glob.glob("../result/info_{}_*.txt".format(ident))[-1]
 
-        ## get the destination path    
+        ##get the destination path    
         if purpose == "train" or purpose == "valid":
             dest_path = "./" + folder_1 + purpose
         elif purpose == "test":
@@ -350,7 +350,7 @@ def auto_create(n_proc):
             subprocess.run("mv {} {}".format(datafile_path, dest_path), shell=True)
             subprocess.run("mv {} {}".format(infofile_path, dest_path), shell=True)
 
-    ## write ./"folder_name"/info.txt
+    ##write ./"folder_name"/info.txt
     file = open("./" + folder_1 + "info.txt", "w")
     file.write("**{}**\n(train,valid,test)=({},{},{})\n Nu : {}\n Ns : {}\n Nq : {}\n".format(folder_name, train_S, valid_S, test_S, Nu, Ns, Nq))
     file.close()
@@ -360,7 +360,7 @@ def auto_create(n_proc):
     print("\n  ***    All finished!!!    ***\n")
 
 
-## main function
+##main function
 if __name__ == "__main__":
     n_proc = -1
     create_target = "dataset"

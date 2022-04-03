@@ -1,13 +1,13 @@
 import numpy as np
 
 def generate_label(data_type, size):
-    """ データの種類に応じてラベルを作成する
-        Haarは0、それ以外は1を作る
+    """ Create labels for different types of data.
+        The Haar measure makes 0, all others make 1.
         Args:
-            data_type := データの種類を指定する文字列(haar, clif, ...)
-            size      := 作成するラベルのサイズ(int)
+            data_type := String specifying data type(haar, clif, ...)
+            size      := Size of label to be created(int)
         Return:
-            label := 0か1を要素に持つsize個の1次元ndarray
+            label := 1d ndarray with the size "size", which elements are 0 or 1
     """
     if data_type == "haar":
         label = np.zeros(size, dtype=np.int8)
@@ -21,12 +21,12 @@ def generate_label(data_type, size):
     return label
 
 def scaler_to_label(output):
-    """ 線形回帰やNNの識別器でmodel.predict()をしたときの出力がラベルではなく
-        スカラーのときに、そのスカラーからラベル{0,1}に変換する関数
+    """ Function to convert a scalar to a label {0,1} when the output of model.predict()
+        in linear regression or NN model is a scalar instead of a label.
         Arg:
-            output := model.predict()の出力
+            output := the output of model.predict()
         Return:
-            ndarray := ラベルの0か1を要素に持つ1次元のリスト
+            ndarray := 1d list with label 0 or 1 as an element
     """
     predicted_label = [0 if i < 0.5 else 1 for i in output.flatten()]
     return np.array(predicted_label)

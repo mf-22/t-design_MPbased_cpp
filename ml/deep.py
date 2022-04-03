@@ -14,9 +14,10 @@ import openpyxl
 
 
 def set_seed(my_seed):
-    """ seedをセットする関数
+    """ Function which sets seed
         Arg:
-            my_seed := int型の疑似乱数のシードになる整数(0以上2**31以下)
+            my_seed := Integer that will be the seed of pseudo-random number of type int
+                       (greater than or equal to 0 and less than or equal to 2**31)
     """
     #print("seed :", my_seed)
     np.random.seed(my_seed)
@@ -24,79 +25,79 @@ def set_seed(my_seed):
 
 
 def deep_learning(repeat=False, shuffle=True):
-    """ Deep Learningを行う関数。流れは以下：
-          1.データ読み込み
-          2.ハイパーパラメータ等の設定
-          3.訓練、訓練課程の保存
-          4.テストデータの評価、評価結果の保存
+    """ Functions runnning Deep Learning. The flow is as follows:
+            1. Data loading
+            2. Set hyper parameters, etc.
+            3. Training, and saving the training log
+            4. Evaluate test data and save evaluation results
         Args:
-            repeat  := グラフ等を表示するかのbool型のフラグ(default=False)
-            shuffle := trainとvalidのデータをランダムに分割するかのbool型のフラグ(default=True)
+            repeat  := bool type flag to display graphs, etc. (default=False)
+            shuffle := bool type flag to split train and valid data randomly(default=True)
     """
-    ## pathの区切り文字("/"か"\")をOSに応じて取得
+    ##Get path delimiter ("/" or "\") depending on OS
     SEP = os.sep
-    ## 現在の時刻を文字列で取得 (例)2021年7月28日18時40分39秒 => 20210728184039
+    ##Get the current time as a string (e.g.) July 28, 2021 18:40:39 => 20210728184039
     dt_now = datetime.datetime.now()
     dt_index = dt_now.strftime("%Y%m%d%H%M%S")
-    ## 疑似乱数のシードを指定
+    ##set the seed
     seed = np.random.randint(2**31)
     set_seed(seed)
     
-    ## ファイル名の入力
+    ##input the filename
     print("input dataset : ", end=(""))
     data_name = input()
     if not os.path.isdir("datasets" + SEP + data_name):
         print('ERROR: Cannnot find the dataset "{}"'.format(data_name))
         return -1
-    ## deep learningの結果を保存するディレクトリのパスを作成
-    ## (例: datasets/dataset1/NN/20210729123234/)
+    ##make a directory path to save deep learning results
+    ##(e.g. datasets/dataset1/NN/20210729123234/)
     dir_path = "datasets" + SEP + data_name + SEP + "NN" + SEP + dt_index + SEP
-    ## 結果を保存するディレクトリを作成
+    ##Create a directory to store the results
     os.makedirs(dir_path)
 
-    ## データセットを読み込む
+    ##Read the dataset
     train_data, train_label, valid_data, valid_label, test_dataset, test_labelset \
         = data_loader.load_data("NN", data_name, dt_index)
     
     if shuffle:
-        ## trainとvalidのデータを結合してランダムに分割する
+        ##Combine training and validation data and divide randomly
         num_train_data = train_data.shape[0]
         temp_data = np.concatenate([train_data, valid_data], axis=0)
         temp_label = np.concatenate([train_label, valid_label], axis=0)
         from sklearn.model_selection import train_test_split
         train_data, valid_data, train_label, valid_label = train_test_split(temp_data, temp_label, train_size=num_train_data, random_state=seed)
 
-    ## 教師データのそれぞれの特徴量について、平均0分散1になるようにスケールする
+    ##Scale to the mean become 0, the variance become 1 for each feature in the teacher data
     scaler = StandardScaler()
-    ## trainデータを用いてシフトと拡縮の割合を計算し変換
+    ##Calculate shift and scaling ratios using train data and transform
     train_data = scaler.fit_transform(train_data)
-    ## validとtestは計算済みのシフト・拡縮幅で変換
+    ##validation and test data are transformed with calculated shift and scaling ratios from training dataset
     valid_data = scaler.transform(valid_data)
     test_dataset = [scaler.transform(test_data) for test_data in test_dataset]
     
     print("\n===== Start Deep Learning (Train and validation Step) =====")
-    ## 特徴量ベクトルの次元を取得
+    ##Get the dimension of the feature vector
     input_node_num = train_data.shape[1]
-    ## 機械学習のハイパーパラメータを指定
-    hidden_node_num = input_node_num #中間層のノード数
-    hidden_layer_num = 1 #中間層の層数
+    ##Set hyperparameters of deep learning
+    hidden_node_num = input_node_num #number of hidden node
+    hidden_layer_num = 1 #number of hidden layer
     epoch = 100
     batch = 128
 
-    ## 空のNNモデルを生成
+    ##Generate empty NN model
     model = tf.keras.Sequential()
-    ## 入力層を追加
+    ##add input layer
     model.add(tf.keras.layers.Dense(input_node_num, input_dim=input_node_num))
     #model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Activation("relu"))
-    ## 中間層を追加
+    ##add hidden layer
     for _ in range(hidden_layer_num):
         #model.add(tf.keras.layers.Dense(hidden_node_num, input_dim=input_node_num))
         model.add(tf.keras.layers.Dense(hidden_node_num))
         #model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Activation("relu"))
         #model.add(tf.keras.layers.Dropout(0.5))
-    ## 出力層を追加
+    ##add output layer
     #model.add(tf.keras.layers.Dense(1, input_dim=input_node_num, activation="sigmoid"))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
@@ -108,17 +109,17 @@ def deep_learning(repeat=False, shuffle=True):
                   loss="binary_crossentropy",
                   metrics=["accuracy"])
     
-    ## 作成したモデルの出力
+    ##output the NN model we created
     print(model.summary())
-    ## 作成したモデルをテキストファイルに描き込んで保存
+    ##Draw and save the created model to a text file
     sys.stdout = open(dir_path+"model.txt", mode="w")
     print(model.summary())
     sys.stdout = sys.__stdout__
-    ## 作成したモデルをpngでも保存
+    ##Save as png as well
     tf.keras.utils.plot_model(model, to_file=dir_path+"model.png")
 
-    ## コールバックの用意
-    ## エポックごとにモデルを保存するコールバック。ただしval_accuracyが良くなったとき
+    ##callbacks
+    ##Callback to save the model at each epoch. However, when val_accuracy is better.
     mc_cb = tf.keras.callbacks.ModelCheckpoint(
         filepath=dir_path+"best_model",
         save_weights_only=False,
@@ -126,7 +127,7 @@ def deep_learning(repeat=False, shuffle=True):
         verbose=1,
         save_best_only=True,
     )
-    ## モニターしている値が特定のepoch間で向上しないときに学習を打ち切るコールバック
+    ##Callback to terminate learning when the value being monitored does not improve between specific epochs
     """
     es_cb = tf.keras.callbacks.EarlyStopping(
         monitor="val_accuracy",
@@ -134,10 +135,10 @@ def deep_learning(repeat=False, shuffle=True):
         min_delta=0.001,
         patience=epoch//4,
         verbose=1,
-        restore_best_weights=True #モニターしている値が最も優れているときの重みを訓練終了時にロードする
+        restore_best_weights=True #Load weights at the end of training when the value being monitored is the best
     )"""
 
-    ## 訓練データでモデルを訓練し、学習過程を取得する
+    ##Train the model with training data and obtain the training process
     start = time.perf_counter()
     history = model.fit(
         train_data,
@@ -149,46 +150,46 @@ def deep_learning(repeat=False, shuffle=True):
         #callbacks=[mc_cb, es_cb]
     )
     finish = time.perf_counter()
-    ## 訓練にかかった時間を出力
+    ##Output time spent on training
     print("fit time : {}[s]".format(finish-start))
 
-    ## 学習時の各エポックごとの過程をexcelファイルに一括で保存
+    ##Save the process for each epoch in the learning to an excel file at once
     hist_df = pd.DataFrame(history.history)
     hist_df.to_excel(dir_path+"results.xlsx", sheet_name="history")
 
-    ## 学習時の各エポックでのlossやaccuracyをグラフに描く
-    ## 各エポックごとの誤差関数の値を取得
+    ##Draw a graph of LOSS and ACCURACY at each epoch in the study.
+    ##Get the value of the error function for each epoch
     loss = history.history["loss"]
     val_loss = history.history["val_loss"]
-    ## 1からepochまでの要素を持つオブジェクトを作成
+    ##Create an object with elements from 1 to epoch
     epochs = range(1, len(loss)+1)
-    ## プロット
-    plt.plot(epochs, loss, "bo", label="Training loss") #訓練データの誤差関数の値のプロット
-    plt.plot(epochs, val_loss, "b", label="Validation loss") #検証データの誤差関数の値のプロット
-    plt.title("Training and validation loss") #グラフのタイトル
-    plt.xlabel("Epochs") #横軸のラベル
-    plt.ylabel("Loss") #縦軸のラベル
-    plt.legend() #レジェンドの出力
-    plt.savefig(dir_path+"loss.png") #グラフをpngで保存
+    ##plot
+    plt.plot(epochs, loss, "bo", label="Training loss") #Plot the values of the error function for the training data
+    plt.plot(epochs, val_loss, "b", label="Validation loss") #Plot the values of the error function for the validation data
+    plt.title("Training and validation loss") #graph title
+    plt.xlabel("Epochs") #label of horizontal axis
+    plt.ylabel("Loss") #label of vertical axis
+    plt.legend() #output legend
+    plt.savefig(dir_path+"loss.png") #save as png
     if not repeat:
-        ## deeplearningを10回とか繰り返しているときは表示しない
-        plt.show() #ウィンドウでグラフの表示
+        ## When deep learning is repeated 10 times or so, it is not displayed.
+        plt.show() #Displaying graphs in a window
     
     ## 各エポックごとの識別精度の値を取得
     acc = history.history["accuracy"]
     val_acc = history.history["val_accuracy"]
-    plt.figure() #グラフのリセット
-    plt.plot(epochs, acc, "bo", label="Training acc") #訓練データの精度のプロット
-    plt.plot(epochs, val_acc, "b", label="Validation acc") #検証データの精度のプロット
-    plt.title("Training and validation accuracy") #グラフのタイトル
-    plt.xlabel("Epochs") #横軸のラベル
-    plt.ylabel("Accuracy") #縦軸のラベル
-    plt.legend() #レジェンドの出力
-    plt.savefig(dir_path+"acc.png") #グラフをpngで保存
+    plt.figure() #clean the graph object
+    plt.plot(epochs, acc, "bo", label="Training acc") #Plot the values of the error function for the training data
+    plt.plot(epochs, val_acc, "b", label="Validation acc") #Plot the values of the error function for the validation data
+    plt.title("Training and validation accuracy") #graph title
+    plt.xlabel("Epochs") #label of horizontal axis
+    plt.ylabel("Accuracy") #label of vertical axis
+    plt.legend() #output legend
+    plt.savefig(dir_path+"acc.png") #save as png
     if not repeat:
-        plt.show() #ウィンドウでグラフの表示
+        plt.show() #Displaying graphs in a window
     
-    ## 機械学習時のパラメータの保存
+    ##Save parameters of deep learning
     with open(dir_path+"train_parameters.txt", mode="w") as f:
         f.write("shuffle        : {}\n".format(shuffle))
         f.write("seed           : {}\n".format(seed))
@@ -201,53 +202,53 @@ def deep_learning(repeat=False, shuffle=True):
         f.write("batch size     : {}\n".format(batch))
         f.write("fit time       : {}\n".format(finish-start))
 
-    ## train dataとvalid dataがどのように識別されたか保存するフォルダを作成
+    ##Make a folder to save how training and validation data are identified
     os.makedirs(dir_path+"predicted_labels")
-    ## 学習済みのNNにtrain dataを入力し、ラベルに変換した後保存
+    ##Input training data to trained NN, convert to labels, and save.
     train_predicted_label = label_generator.scaler_to_label(model.predict(train_data))
     np.save(dir_path+"predicted_labels/train_predicted_label.npy", train_predicted_label)
-    ## 学習済みのNNにvalid dataを入力し、ラベルに変換した後保存
+    ##Input validation data into trained NN, convert to labels, and save
     valid_predicted_label = label_generator.scaler_to_label(model.predict(valid_data))
     np.save(dir_path+"predicted_labels/valid_predicted_label.npy", valid_predicted_label)
     
-    ## テストデータの評価を行う
+    ##Evaluate test data
     print("\n\n===== Start test using NN (Test step) =====")
-    ## テストは訓練の中で最も良かった(val_accが高かった)ときのモデルで行う、そのためにロードする
-    ## EarlyStoppingのコールバックがありのときはEalryStoppingのコールバックが同じことをしてくれる
+    ##Test step is done on the model when it was the best (val_acc was high) in the training, load for that.
+    ##EarlyStopping callback does the same thing.
     model = tf.keras.models.load_model(dir_path+"best_model")
 
-    ## 先程の訓練課程を保存したエクセルにテストの結果等を保存する
+    ##Save the test results, etc. in the Excel file where you saved the training log earlier.
     wb = openpyxl.load_workbook(dir_path + "results.xlsx")
-    ## 新たなシート"test_results"に書き込んでいく
+    ##Write in a new sheet "test_results"
     test_ws = wb.create_sheet(title="test_results")
     test_ws["B1"] = "accuracy"
     test_ws["C1"] = "count0"
     test_ws["D1"] = "count1"
 
     for i in range(len(test_dataset)):
-        ## テストデータのリストから抜き出す
+        ##Extracting test data from the list of test dataset
         test_data = test_dataset[i]
         test_label = test_labelset[i]
         print("\n** test{} **".format(i+1))
 
-        ## テストデータの識別精度を取得
+        ##get identification accuracy of test data
         data_loss, data_acc = model.evaluate(test_data, test_label)
         
-        ## 学習済みのNNにtest dataを入力し、ラベルに変換し保存
+        ##Input test data into trained NN, convert to labels, and save.
         test_predicted_label = label_generator.scaler_to_label(model.predict(test_data))
         np.save(dir_path+"predicted_labels/test{}_predicted_label.npy".format(i+1), test_predicted_label)
-        ## NNの予測結果が0と1の数をそれぞれ取得
+        ##Get the number of NN predicted results of 0 and 1, respectively
         count_0 = np.count_nonzero(test_predicted_label==0)
         count_1 = np.count_nonzero(test_predicted_label==1)
         print("acc : {}, label0 : {}, label1 : {}".format(data_acc, count_0, count_1))
 
-        ## 結果をexcelのシートに書き込む
+        ##Write the results on the excel sheet
         test_ws.cell(row=i+2, column=1, value="test{}".format(i+1))
         test_ws.cell(row=i+2, column=2, value=data_acc)
         test_ws.cell(row=i+2, column=3, value=count_0)
         test_ws.cell(row=i+2, column=4, value=count_1)
     
-    ## excelのシートへの書き込みを保存して終了
+    ## Save the writing to excel sheet and exit
     wb.save(dir_path+"results.xlsx")
 
 
